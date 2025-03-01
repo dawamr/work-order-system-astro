@@ -1,0 +1,74 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import WorkOrderList from '../components/WorkOrderList';
+
+// We'll handle authentication in client-side
+// This is just a placeholder for SSR
+const isAuthenticated = true;
+const userRole = null; // Will be set via client-side script
+---
+
+<MainLayout title="Work Orders" isAuthenticated={isAuthenticated} userRole={userRole}>
+  <div class="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Work Orders</h1>
+    <a
+      href="/work-orders/create"
+      class="inline-flex items-center rounded bg-blue-600 dark:bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+    >
+      <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      </svg>
+      Create Work Order
+    </a>
+  </div>
+
+  <WorkOrderList client:load type="manager" />
+</MainLayout>
+
+<script>
+  import { authDBOperations } from '../utils/indexedDB';
+
+  // Simple auth check - redirect if not logged in
+  (async function() {
+    try {
+      const authData = await authDBOperations.getAuth();
+
+      if (!authData || !authData.token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const role = authData.user.role;
+
+      if (role !== 'production_manager') {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Find all Astro islands that need to know about the user role
+      const islands = document.querySelectorAll('astro-island[uid]');
+      islands.forEach(island => {
+        try {
+          // Get current props if any
+          const currentProps = island.getAttribute('props');
+          let propsObj = currentProps ? JSON.parse(currentProps) : {};
+
+          // Update userRole
+          propsObj.userRole = role;
+
+          // Set the updated props
+          island.setAttribute('props', JSON.stringify(propsObj));
+        } catch (e) {
+          console.error('Error updating props for island:', e);
+        }
+      });
+
+      // Also update any component that might be looking for a data attribute
+      document.body.setAttribute('data-user-role', role);
+
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      window.location.href = '/login';
+    }
+  })();
+</script>
