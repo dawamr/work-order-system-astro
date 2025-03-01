@@ -1,0 +1,206 @@
+---
+import '../styles/global.css';
+import DashboardLayout from '../components/DashboardLayout';
+import ThemeToggle from '../components/ThemeToggle';
+
+interface Props {
+  title: string;
+  isAuthenticated?: boolean;
+  userRole?: 'production_manager' | 'operator' | null;
+  useDashboardLayout?: boolean;
+}
+
+const {
+  title,
+  isAuthenticated = false,
+  userRole = null,
+  useDashboardLayout = true
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | Work Order Management System</title>
+    <meta name="description" content="Work Order Management System for production management">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Dark mode script - must run before page renders -->
+    <script is:inline>
+      // Initialize IndexedDB and check theme
+      (async function() {
+        try {
+          // Simple IndexedDB open for initial theme check
+          const request = indexedDB.open('work-order-system', 1);
+
+          request.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('config')) {
+              db.createObjectStore('config');
+            }
+          };
+
+          request.onsuccess = function(event) {
+            const db = event.target.result;
+            const tx = db.transaction('config', 'readonly');
+            const store = tx.objectStore('config');
+            const themeRequest = store.get('theme');
+
+            themeRequest.onsuccess = function() {
+              const savedTheme = themeRequest.result;
+              if (savedTheme === 'dark' ||
+                  (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+              } else {
+                document.documentElement.classList.remove('dark');
+              }
+            };
+
+            themeRequest.onerror = function() {
+              // Fallback to system preference
+              if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+              }
+            };
+          };
+
+          request.onerror = function() {
+            // Fallback to system preference if IndexedDB fails
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+              document.documentElement.classList.add('dark');
+            }
+          };
+        } catch (error) {
+          console.error('Error accessing IndexedDB:', error);
+          // Fallback to system preference
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+          }
+        }
+      })();
+    </script>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 h-full">
+    {isAuthenticated && useDashboardLayout ? (
+      <DashboardLayout userRole={userRole} title={title} client:load>
+        <slot />
+      </DashboardLayout>
+    ) : (
+      <div class="min-h-screen flex flex-col">
+        {isAuthenticated && !useDashboardLayout && (
+          <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                  <button
+                    id="mobile-menu-button"
+                    class="md:hidden p-2 mr-4 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                    aria-label="Open menu"
+                  >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                  </button>
+                  <a href="/dashboard" class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-800 dark:text-white">Work Order Management</h1>
+                  </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                  <nav class="hidden md:flex space-x-1">
+                    {userRole === 'production_manager' && (
+                      <>
+                        <a href="/dashboard" class="px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Dashboard</a>
+                        <a href="/work-orders" class="px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Work Orders</a>
+                        <a href="/reports" class="px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Reports</a>
+                      </>
+                    )}
+                    {userRole === 'operator' && (
+                      <>
+                        <a href="/dashboard" class="px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Dashboard</a>
+                        <a href="/assigned-orders" class="px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">My Work Orders</a>
+                      </>
+                    )}
+                  </nav>
+                  <div class="flex items-center">
+                    <ThemeToggle client:load />
+                    <button
+                      id="logout-btn"
+                      class="ml-4 px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile menu (hidden by default) -->
+            <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 py-2 px-4">
+              <div class="space-y-1">
+                {userRole === 'production_manager' && (
+                  <>
+                    <a href="/dashboard" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Dashboard</a>
+                    <a href="/work-orders" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Work Orders</a>
+                    <a href="/reports" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Reports</a>
+                  </>
+                )}
+                {userRole === 'operator' && (
+                  <>
+                    <a href="/dashboard" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Dashboard</a>
+                    <a href="/assigned-orders" class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">My Work Orders</a>
+                  </>
+                )}
+              </div>
+            </div>
+          </header>
+        )}
+
+        <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <slot />
+        </main>
+
+        <footer class="bg-gray-100 dark:bg-gray-800 py-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+            &copy; {new Date().getFullYear()} Work Order Management System
+          </div>
+        </footer>
+      </div>
+    )}
+
+    <script>
+      import { authDBOperations } from '../utils/indexedDB';
+
+      // Handle mobile menu toggle
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu on window resize
+        window.addEventListener('resize', () => {
+          if (window.innerWidth >= 768) {
+            mobileMenu.classList.add('hidden');
+          }
+        });
+      }
+
+      // Handle logout
+      document.getElementById('logout-btn')?.addEventListener('click', async () => {
+        try {
+          // Clear auth data from IndexedDB
+          await authDBOperations.clearAuth();
+          window.location.href = '/login';
+        } catch (error) {
+          console.error('Error clearing auth data:', error);
+          // Fallback to redirect even if clearing fails
+          window.location.href = '/login';
+        }
+      });
+    </script>
+  </body>
+</html>
