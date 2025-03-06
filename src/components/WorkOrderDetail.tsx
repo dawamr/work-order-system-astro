@@ -63,12 +63,16 @@ const WorkOrderDetail: React.FC<WorkOrderDetailProps> = ({ id }) => {
     return words.map((word, index) => {
       if (word.includes('@') || word.includes('#')) {
         return (
-          <span key={index} className='text-blue-600 dark:text-blue-400 font-medium'>
+          <span key={index} className='text-primary-600 dark:text-primary-400 font-medium'>
             {word}{' '}
           </span>
         );
       }
-      return <span key={index}>{word} </span>;
+      return (
+        <span key={index} className='text-gray-700 dark:text-gray-300'>
+          {word}{' '}
+        </span>
+      );
     });
   };
 
