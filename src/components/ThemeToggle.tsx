@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { configDBOperations } from '../utils/indexedDB';
+import { localStorageOperations } from '../utils/localStorage';
 
 const ThemeToggle: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Initialize theme from IndexedDB or system preference
+  // Initialize theme from localStorage or system preference
   useEffect(() => {
     const initTheme = async () => {
       try {
-        // Check if theme is stored in IndexedDB
-        const savedTheme = await configDBOperations.getSetting('theme');
+        // Check if theme is stored in localStorage
+        const savedTheme = localStorageOperations.getSetting('theme');
 
         if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           setIsDarkMode(true);
@@ -19,7 +19,7 @@ const ThemeToggle: React.FC = () => {
           document.documentElement.classList.remove('dark');
         }
       } catch (error) {
-        console.error('Error getting theme from IndexedDB:', error);
+        console.error('Error getting theme from localStorage:', error);
         // Fallback to system preference
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           setIsDarkMode(true);
@@ -36,16 +36,16 @@ const ThemeToggle: React.FC = () => {
       if (isDarkMode) {
         // Switch to light mode
         document.documentElement.classList.remove('dark');
-        await configDBOperations.saveSetting('theme', 'light');
+        await localStorageOperations.saveSetting('theme', 'light');
         setIsDarkMode(false);
       } else {
         // Switch to dark mode
         document.documentElement.classList.add('dark');
-        await configDBOperations.saveSetting('theme', 'dark');
+        await localStorageOperations.saveSetting('theme', 'dark');
         setIsDarkMode(true);
       }
     } catch (error) {
-      console.error('Error saving theme to IndexedDB:', error);
+      console.error('Error saving theme to localStorage:', error);
     }
   };
 
