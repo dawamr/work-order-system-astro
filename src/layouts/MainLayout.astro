@@ -29,51 +29,20 @@ const {
 
     <!-- Dark mode script - must run before page renders -->
     <script is:inline>
-      // Initialize IndexedDB and check theme
-      (async function() {
+      // Initialize localStorage and check theme
+      (function() {
         try {
-          // Simple IndexedDB open for initial theme check
-          const request = indexedDB.open('work-order-system', 1);
+          // Simple localStorage get for initial theme check
+          const savedTheme = localStorage.getItem('theme');
 
-          request.onupgradeneeded = function(event) {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains('config')) {
-              db.createObjectStore('config');
-            }
-          };
-
-          request.onsuccess = function(event) {
-            const db = event.target.result;
-            const tx = db.transaction('config', 'readonly');
-            const store = tx.objectStore('config');
-            const themeRequest = store.get('theme');
-
-            themeRequest.onsuccess = function() {
-              const savedTheme = themeRequest.result;
-              if (savedTheme === 'dark' ||
-                  (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-              } else {
-                document.documentElement.classList.remove('dark');
-              }
-            };
-
-            themeRequest.onerror = function() {
-              // Fallback to system preference
-              if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.classList.add('dark');
-              }
-            };
-          };
-
-          request.onerror = function() {
-            // Fallback to system preference if IndexedDB fails
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-              document.documentElement.classList.add('dark');
-            }
-          };
+          if (savedTheme === 'dark' ||
+              (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
         } catch (error) {
-          console.error('Error accessing IndexedDB:', error);
+          console.error('Error accessing localStorage:', error);
           // Fallback to system preference
           if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
@@ -170,7 +139,7 @@ const {
     )}
 
     <script>
-      import { authDBOperations } from '../utils/indexedDB';
+      import { localStorageOperations } from '../utils/localStorage';
 
       // Handle mobile menu toggle
       const mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -192,8 +161,8 @@ const {
       // Handle logout
       document.getElementById('logout-btn')?.addEventListener('click', async () => {
         try {
-          // Clear auth data from IndexedDB
-          await authDBOperations.clearAuth();
+          // Clear auth data from localStorage
+          await localStorageOperations.clearAuth();
           window.location.href = '/login';
         } catch (error) {
           console.error('Error clearing auth data:', error);
