@@ -86,7 +86,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ workOrders, isLoading, onEv
   return (
     <Card>
       <div className='flex items-center justify-between mb-4'>
-        <h2 className='text-lg font-semibold text-gray-800 dark:text-white'>{format(currentMonth, 'MMMM yyyy')}</h2>
+        <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>{format(currentMonth, 'MMMM yyyy')}</h2>
         <div className='flex space-x-2'>
           <button onClick={prevMonth} className='p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'>
             <svg
@@ -122,7 +122,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ workOrders, isLoading, onEv
       <div className='grid grid-cols-7 gap-1'>
         {/* Day headers */}
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className='text-center font-medium text-sm text-gray-600 dark:text-gray-400 py-2'>
+          <div key={day} className='text-center font-medium text-sm text-gray-700 dark:text-gray-300 py-2'>
             {day}
           </div>
         ))}
@@ -161,7 +161,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ workOrders, isLoading, onEv
                       statusConfig[workOrder.status as keyof typeof statusConfig] || 'bg-gray-100'
                     }`}
                   >
-                    <div className='text-truncate'>{workOrder.product_name}</div>
+                    <div className='text-truncate text-gray-900 dark:text-gray-100'>{workOrder.product_name}</div>
                   </div>
                 ))}
 
