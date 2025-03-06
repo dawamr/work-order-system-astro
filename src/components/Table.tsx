@@ -2,7 +2,8 @@ import React from 'react';
 
 export interface TableColumn<T> {
   header: string;
-  accessor: keyof T | ((data: T) => React.ReactNode);
+  accessor: keyof T | string;
+  cell?: (value: any, row?: T) => React.ReactNode;
   className?: string;
 }
 
@@ -24,11 +25,20 @@ export function Table<T extends Record<string, any>>({
   onRowClick,
 }: TableProps<T>) {
   const renderCell = (item: T, column: TableColumn<T>) => {
+    const value = typeof column.accessor === 'string' ? item[column.accessor as keyof T] : null;
+
+    // Use custom cell renderer if provided
+    if (column.cell) {
+      return column.cell(value, item);
+    }
+
+    // Use accessor as function if it's a function
     if (typeof column.accessor === 'function') {
       return column.accessor(item);
     }
 
-    return item[column.accessor];
+    // Otherwise just return the value
+    return value;
   };
 
   return (
