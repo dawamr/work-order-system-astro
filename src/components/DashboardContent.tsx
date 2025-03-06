@@ -81,7 +81,7 @@ const DashboardContent: React.FC = () => {
       </div>
 
       <div className='mt-8'>
-        <h2 className='mb-4 text-xl font-semibold text-gray-800'>Recent Activity</h2>
+        <h2 className='mb-4 text-xl font-semibold text-gray-800 dark:text-white'>Recent Activity</h2>
         <div className='rounded-lg bg-white p-4 shadow-md'>
           <p className='text-center text-gray-500'>No recent activity found.</p>
         </div>
