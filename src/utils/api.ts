@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
-import { authDBOperations } from './indexedDB';
+import { localStorageOperations } from './localStorage';
 
 // API base URL
 const API_URL = 'http://localhost:8080/api';
@@ -13,21 +13,27 @@ const api = axios.create({
   },
 });
 
-// Interceptor to add auth token to requests
 api.interceptors.request.use(
   async (config) => {
+    console.log('Request Interceptor dijalankan');
     try {
-      const authData = await authDBOperations.getAuth();
+      const authData = localStorageOperations.getAuth();
+      console.log('Auth Data:', authData); // Debugging
       if (authData?.token && config.headers) {
         config.headers.Authorization = `Bearer ${authData.token}`;
+        console.log('Auth Header Set:', config.headers.Authorization); // Debugging
       }
       return config;
     } catch (error) {
-      console.error('Error getting auth token from IndexedDB:', error);
+      console.error('Error getting auth token from Local Storage:', error);
+      console.error('Interceptor Error:', error);
       return config;
     }
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    console.error('Request Interceptor Error (Promise Reject):', error);
+    return Promise.reject(error);
+  },
 );
 
 // Interceptor to handle response errors
@@ -37,13 +43,13 @@ api.interceptors.response.use(
     // Handle unauthorized errors
     if (error.response && error.response.status === 401) {
       try {
-        await authDBOperations.clearAuth();
+        await localStorageOperations.clearAuth();
         // Redirect to login page if not already there
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
       } catch (dbError) {
-        console.error('Error clearing auth data from IndexedDB:', dbError);
+        console.error('Error clearing auth data from Local Storage:', dbError);
       }
     }
     return Promise.reject(error);
@@ -66,10 +72,9 @@ export const authAPI = {
 // Work Orders API
 export const workOrderAPI = {
   // Get all work orders (Production Manager)
-  getAll: async (page: number = 1, limit: number = 10, status?: string) => {
-    const params: Record<string, any> = { page, limit };
+  getAll: async (page: number = 1, status?: string) => {
+    const params: Record<string, any> = { page };
     if (status) params.status = status;
-
     const response = await api.get('/work-orders', { params });
     return response.data;
   },
@@ -86,6 +91,60 @@ export const workOrderAPI = {
   // Get work order by ID
   getById: async (id: number) => {
     const response = await api.get(`/work-orders/${id}`);
+    return response.data;
+  },
+
+  getAuditLogs: async (id: number) => {
+    //   {
+    //     "error": false,
+    //     "logs": [
+    //         {
+    //             "id": 8,
+    //             "user_id": 1,
+    //             "user": {
+    //                 "id": 1,
+    //                 "username": "manager",
+    //                 "role": "production_manager",
+    //                 "created_at": "2025-03-05T23:22:54.35481+07:00",
+    //                 "updated_at": "2025-03-05T23:22:54.35481+07:00"
+    //             },
+    //             "action": "update",
+    //             "entity_id": 205,
+    //             "entity_type": "WorkOrder",
+    //             "old_values": {
+    //                 "quantity": 8
+    //             },
+    //             "new_values": {
+    //                 "quantity": 9
+    //             },
+    //             "note": "Work order WO-20250306-004 updated",
+    //             "created_at": "2025-03-06T11:01:35.954318+07:00"
+    //         },
+    //         {
+    //             "id": 7,
+    //             "user_id": 1,
+    //             "user": {
+    //                 "id": 1,
+    //                 "username": "manager",
+    //                 "role": "production_manager",
+    //                 "created_at": "2025-03-05T23:22:54.35481+07:00",
+    //                 "updated_at": "2025-03-05T23:22:54.35481+07:00"
+    //             },
+    //             "action": "update",
+    //             "entity_id": 205,
+    //             "entity_type": "WorkOrder",
+    //             "old_values": {
+    //                 "quantity": 5
+    //             },
+    //             "new_values": {
+    //                 "quantity": 8
+    //             },
+    //             "note": "Work order WO-20250306-004 updated",
+    //             "created_at": "2025-03-06T10:57:26.457733+07:00"
+    //         }
+    //     ]
+    // }
+    const response = await api.get(`/work-orders/${id}/logs`);
     return response.data;
   },
 
@@ -141,6 +200,17 @@ export const workOrderAPI = {
     const response = await api.get(`/work-orders/${id}/history`);
     return response.data;
   },
+
+  delete: async (id: number) => {
+    const response = await api.delete(`/work-orders/${id}`);
+    return response.data;
+  },
+
+  // Add custom log/note to work order
+  addCustomLog: async (id: number, data: { note: string }) => {
+    const response = await api.post(`/work-orders/${id}/logs`, data);
+    return response.data;
+  },
 };
 
 // Reports API
@@ -166,8 +236,18 @@ export const reportsAPI = {
   },
 };
 
+// Operators API
+export const operatorsAPI = {
+  // Get all operators
+  getAll: async () => {
+    const response = await api.get('/operators');
+    return response.data;
+  },
+};
+
 export default {
   auth: authAPI,
   workOrders: workOrderAPI,
   reports: reportsAPI,
+  operators: operatorsAPI,
 };
