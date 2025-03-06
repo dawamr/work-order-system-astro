@@ -4,7 +4,7 @@ import Input from './Input';
 import PopupCard from './PopupCard';
 import { authAPI } from '../utils/api';
 import ThemeToggle from './ThemeToggle';
-import { authDBOperations } from '../utils/indexedDB';
+import { localStorageOperations } from '../utils/localStorage';
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -28,8 +28,8 @@ const LoginForm: React.FC = () => {
     try {
       const response = await authAPI.login(username, password);
 
-      // Store auth data in IndexedDB
-      await authDBOperations.saveAuth({
+      // Store auth data in localStorage
+      await localStorageOperations.saveAuth({
         token: response.token,
         user: {
           id: response.user.id,
