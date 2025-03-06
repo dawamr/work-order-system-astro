@@ -1,0 +1,47 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import WorkOrderDetail from '../../components/WorkOrderDetail';
+
+// Proteksi rute dan otentikasi akan di handle di client side
+const isAuthenticated = true;
+const userRole = null;
+
+export async function getStaticPaths() {
+  // Secara default tidak ada static path, karena ini halaman dinamis
+  return [];
+}
+
+const { id } = Astro.params;
+console.log('Astro.params.id:', id);
+---
+
+<MainLayout title="Work Order Detail" isAuthenticated={isAuthenticated} userRole={userRole}>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Work Order Detail</h1>
+  </div>
+
+  <WorkOrderDetail id={id} client:load />
+</MainLayout>
+
+<script>
+  import { localStorageOperations } from '../../utils/localStorage';
+
+  // Proteksi rute dan otentikasi di client side
+  (async function() {
+    try {
+      const authData = localStorageOperations.getAuth();
+
+      if (!authData || !authData.token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const role = authData.user.role;
+      document.body.setAttribute('data-user-role', role);
+
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      window.location.href = '/login';
+    }
+  })();
+</script>
