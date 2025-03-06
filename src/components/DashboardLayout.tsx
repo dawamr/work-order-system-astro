@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { authDBOperations } from '../utils/indexedDB';
+import { localStorageOperations } from '../utils/localStorage';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -37,9 +37,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         return;
       }
 
-      // Last resort: try to get from IndexedDB directly
+      // Last resort: try to get from localStorage directly
       try {
-        const authData = await authDBOperations.getAuth();
+        const authData = localStorageOperations.getAuth();
         if (authData?.user?.role) {
           const role = authData.user.role;
           if (role === 'production_manager' || role === 'operator') {
