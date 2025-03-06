@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { authDBOperations } from '../utils/indexedDB';
+import { localStorageOperations } from '../utils/localStorage';
 import ThemeToggle from './ThemeToggle';
 
 interface SidebarProps {
@@ -31,9 +31,9 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole: propUserRole, isOpen, toggl
         return;
       }
 
-      // Last resort: try to get from IndexedDB directly
+      // Last resort: try to get from localStorage directly
       try {
-        const authData = await authDBOperations.getAuth();
+        const authData = localStorageOperations.getAuth();
         if (authData?.user?.role) {
           const role = authData.user.role;
           if (role === 'production_manager' || role === 'operator') {
@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole: propUserRole, isOpen, toggl
 
   const handleLogout = async () => {
     try {
-      await authDBOperations.clearAuth();
+      await localStorageOperations.clearAuth();
       window.location.href = '/login';
     } catch (error) {
       console.error('Error clearing auth data:', error);
