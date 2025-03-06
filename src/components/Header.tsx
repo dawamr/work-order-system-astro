@@ -1,6 +1,6 @@
 import React from 'react';
 import ThemeToggle from './ThemeToggle';
-import { authDBOperations } from '../utils/indexedDB';
+import { localStorageOperations } from '../utils/localStorage';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -10,7 +10,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, title = 'Dashboard' }) => {
   const handleLogout = async () => {
     try {
-      await authDBOperations.clearAuth();
+      await localStorageOperations.clearAuth();
       window.location.href = '/login';
     } catch (error) {
       console.error('Error clearing auth data:', error);
