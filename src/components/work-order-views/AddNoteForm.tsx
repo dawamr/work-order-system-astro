@@ -125,7 +125,7 @@ const AddNoteForm: React.FC<AddNoteFormProps> = ({ workOrderId, onSuccess, onCan
   const renderFormattedNote = () => {
     if (!newNote) {
       return (
-        <span className='text-gray-400 dark:text-gray-500'>Tulis catatan... Gunakan @ untuk mention seseorang</span>
+        <span className='text-gray-500 dark:text-gray-400'>Tulis catatan... Gunakan @ untuk mention seseorang</span>
       );
     }
 
@@ -134,7 +134,7 @@ const AddNoteForm: React.FC<AddNoteFormProps> = ({ workOrderId, onSuccess, onCan
         return (
           <span key={index} className='inline-flex items-center mx-0.5'>
             <span
-              className='bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300
+              className='bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300
                          px-1.5 py-0.5 rounded-md font-medium text-sm'
             >
               {word}
@@ -142,36 +142,39 @@ const AddNoteForm: React.FC<AddNoteFormProps> = ({ workOrderId, onSuccess, onCan
           </span>
         );
       }
-      return <span key={index}>{word} </span>;
+      return (
+        <span key={index} className='text-gray-900 dark:text-gray-100'>
+          {word}{' '}
+        </span>
+      );
     });
   };
 
   return (
     <div
-      className={`transition-all duration-300 ease-in-out ${
-        isVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'
-      }`}
+      className={`transition-all duration-300 ease-in-out
+      ${isVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'}`}
     >
       <form onSubmit={handleSubmit} className='mb-4'>
         <div className='space-y-4'>
           <div className='relative'>
-            {/* Preview area dengan pointer-events: none */}
+            {/* Preview area */}
             <div
               ref={previewRef}
               className='w-full px-3 py-2 text-sm min-h-[5rem] border border-gray-300 dark:border-gray-600
-                       rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                       pointer-events-none' // Membiarkan event mouse melewati ke textarea
+                       rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                       pointer-events-none'
             >
               {renderFormattedNote()}
             </div>
 
-            {/* Textarea untuk input aktual */}
+            {/* Textarea */}
             <textarea
               ref={textareaRef}
               className='w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600
-                       rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500
-                       focus:border-blue-500 dark:bg-gray-700 dark:text-white
-                       absolute inset-0 opacity-0 z-10' // z-index untuk memastikan di atas preview
+                       rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500
+                       focus:border-primary-500 dark:bg-gray-800 dark:text-gray-100
+                       absolute inset-0 opacity-0 z-10'
               rows={3}
               placeholder='Write a note... Use @ to mention someone'
               value={newNote}
@@ -183,8 +186,8 @@ const AddNoteForm: React.FC<AddNoteFormProps> = ({ workOrderId, onSuccess, onCan
             {showMentionList && filteredUsers.length > 0 && (
               <div
                 ref={mentionListRef}
-                className='absolute z-20 w-64 mt-1 bg-white dark:bg-gray-700 rounded-md
-                         shadow-lg border border-gray-200 dark:border-gray-600'
+                className='absolute z-20 w-64 mt-1 bg-white dark:bg-gray-800 rounded-md
+                         shadow-lg border border-gray-200 dark:border-gray-700'
                 style={{
                   top: `${cursorPosition.top}px`,
                   left: `${cursorPosition.left}px`,
@@ -194,13 +197,13 @@ const AddNoteForm: React.FC<AddNoteFormProps> = ({ workOrderId, onSuccess, onCan
                   {filteredUsers.map((user) => (
                     <li
                       key={user.id}
-                      className='px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer
+                      className='px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer
                                flex items-center justify-between group'
                       onClick={() => handleMentionSelect(user.username)}
                     >
                       <span
-                        className='text-gray-900 dark:text-white group-hover:text-blue-600
-                                   dark:group-hover:text-blue-400 flex items-center'
+                        className='text-gray-900 dark:text-gray-100 group-hover:text-primary-600
+                                   dark:group-hover:text-primary-400 flex items-center'
                       >
                         <span className='w-2 h-2 rounded-full bg-green-500 mr-2'></span>
                         {user.username}
