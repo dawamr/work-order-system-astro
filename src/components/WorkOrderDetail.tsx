@@ -181,7 +181,7 @@ const WorkOrderDetail: React.FC<WorkOrderDetailProps> = ({ id }) => {
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
       {/* Work Order Info - 2 columns */}
       <div className='lg:col-span-2 space-y-6'>
-        <Card className='hover:shadow-lg transition-shadow duration-200'>
+        <Card className='hover:shadow-lg transition-shadow duration-200 dark:bg-gray-800 dark:text-white'>
           <div className='px-6 py-4'>
             <div className='font-bold text-xl mb-2 text-gray-900 dark:text-white'>Work Order Information</div>
             <div className='divide-y divide-gray-200 dark:divide-gray-700'>
@@ -218,7 +218,7 @@ const WorkOrderDetail: React.FC<WorkOrderDetailProps> = ({ id }) => {
           </div>
         </Card>
 
-        <Card className='hover:shadow-lg transition-shadow duration-200'>
+        <Card className='hover:shadow-lg transition-shadow duration-200 dark:bg-gray-800 dark:text-white'>
           <div className='px-6 py-4'>
             <div className='font-bold text-xl mb-2 text-gray-900 dark:text-white'>Operator Information</div>
             <div className='divide-y divide-gray-200 dark:divide-gray-700'>
@@ -237,7 +237,7 @@ const WorkOrderDetail: React.FC<WorkOrderDetailProps> = ({ id }) => {
 
       {/* Log Section - 1 column */}
       <div className='lg:col-span-1'>
-        <Card className='hover:shadow-lg transition-shadow duration-200'>
+        <Card className='hover:shadow-lg transition-shadow duration-200 dark:bg-gray-800 dark:text-white'>
           <div className='px-6 py-4'>
             <div className='flex items-center justify-between mb-4'>
               <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>Activity Log</h2>
@@ -268,7 +268,7 @@ const WorkOrderDetail: React.FC<WorkOrderDetailProps> = ({ id }) => {
                     <div className='flex items-center justify-between mb-1'>
                       <p className='text-sm font-medium text-gray-900 dark:text-white'>
                         {log.user.username}
-                        <span className='ml-2 text-xs text-gray-500 dark:text-gray-400'>({log.user.role})</span>
+                        {/* <span className='ml-2 text-xs text-gray-500 dark:text-gray-400'>({log.user.role})</span> */}
                       </p>
                     </div>
                     {renderLogContent(log)}
