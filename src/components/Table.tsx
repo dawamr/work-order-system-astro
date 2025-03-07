@@ -43,7 +43,7 @@ export function Table<T extends Record<string, any>>({
 
   return (
     <div className='overflow-x-auto'>
-      <table className={`min-w-full divide-y divide-gray-200 ${className}`}>
+      <table className={`min-w-full divide-y divide-gray-200 ${className} ${isLoading ? 'opacity-50' : ''}`}>
         <thead className='bg-gray-50'>
           <tr>
             {columns.map((column, index) => (
@@ -59,7 +59,7 @@ export function Table<T extends Record<string, any>>({
             ))}
           </tr>
         </thead>
-        <tbody className='bg-white divide-y divide-gray-200'>
+        <tbody className='bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:text-white'>
           {isLoading ? (
             <tr>
               <td colSpan={columns.length} className='px-6 py-4 text-center'>
@@ -98,7 +98,7 @@ export function Table<T extends Record<string, any>>({
             data.map((item, rowIndex) => (
               <tr
                 key={rowIndex}
-                className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                className={`${onRowClick ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700' : ''}`}
                 onClick={() => onRowClick && onRowClick(item)}
               >
                 {columns.map((column, colIndex) => (
