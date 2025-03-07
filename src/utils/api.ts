@@ -1,9 +1,7 @@
 import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { localStorageOperations } from './localStorage';
-
-// API base URL
-const API_URL = 'http://localhost:8080/api';
+import { API_URL } from 'astro:env/client';
 
 // Create axios instance
 const api = axios.create({
