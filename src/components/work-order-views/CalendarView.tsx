@@ -84,7 +84,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ workOrders, isLoading, onEv
   }
 
   return (
-    <Card>
+    <Card className='dark:bg-gray-800 dark:text-white'>
       <div className='flex items-center justify-between mb-4'>
         <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>{format(currentMonth, 'MMMM yyyy')}</h2>
         <div className='flex space-x-2'>
@@ -136,9 +136,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ workOrders, isLoading, onEv
           return (
             <div
               key={day.toString()}
-              className={`min-h-[100px] border border-gray-200 dark:border-gray-700 rounded p-1 ${
+              className={`min-h-[100px] border border-gray-200 dark:border-gray-700 rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                 !isCurrentMonth
-                  ? 'bg-gray-50 dark:bg-gray-800/50 text-gray-400 dark:text-gray-500'
+                  ? 'bg-gray-50 dark:bg-gray-500/50 text-gray-400 dark:text-gray-500'
                   : 'bg-white dark:bg-gray-800'
               } ${isTodayDate ? 'ring-2 ring-blue-500 dark:ring-blue-600' : ''}`}
             >
