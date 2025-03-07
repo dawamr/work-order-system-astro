@@ -5,7 +5,7 @@ import { API_URL } from 'astro:env/client';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL ? API_URL : 'https://api.workorder.dawam.dev',
   headers: {
     'Content-Type': 'application/json',
   },
