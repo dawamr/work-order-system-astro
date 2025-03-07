@@ -67,6 +67,19 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
     fetchWorkOrders(currentPage);
   }, [currentPage, statusFilter]);
 
+  // Add event listener for refreshWorkOrders
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchWorkOrders(currentPage);
+    };
+
+    document.addEventListener('refreshWorkOrders', handleRefresh);
+
+    return () => {
+      document.removeEventListener('refreshWorkOrders', handleRefresh);
+    };
+  }, [currentPage]);
+
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
