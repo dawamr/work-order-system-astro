@@ -1,15 +1,11 @@
 ---
+export const prerender = false;
 import MainLayout from '../../layouts/MainLayout.astro';
 import WorkOrderDetail from '../../components/WorkOrderDetail';
 
 // Proteksi rute dan otentikasi akan di handle di client side
 const isAuthenticated = true;
 const userRole = null;
-
-export async function getStaticPaths() {
-  // Secara default tidak ada static path, karena ini halaman dinamis
-  return [];
-}
 
 const { id } = Astro.params;
 console.log('Astro.params.id:', id);
