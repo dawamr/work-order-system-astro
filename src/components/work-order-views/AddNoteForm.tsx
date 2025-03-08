@@ -2,12 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Button from '../Button';
 import { workOrderAPI } from '../../utils/api';
 import { operatorsAPI } from '../../utils/api';
-
-interface User {
-  id: number;
-  username: string;
-  role: string;
-}
+import type { User } from '../../types/user';
 
 interface AddNoteFormProps {
   workOrderId: number;
