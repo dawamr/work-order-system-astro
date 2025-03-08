@@ -70,9 +70,7 @@ export const authAPI = {
 // Work Orders API
 export const workOrderAPI = {
   // Get all work orders (Production Manager)
-  getAll: async (page: number = 1, status?: string) => {
-    const params: Record<string, any> = { page };
-    if (status) params.status = status;
+  getAll: async (params: Record<string, any>) => {
     const response = await api.get('/work-orders', { params });
     return response.data;
   },
