@@ -16,7 +16,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [userRole, setUserRole] = useState<'production_manager' | 'operator' | null>(initialUserRole);
+  const [userRole, setUserRole] = useState<UserRole>(initialUserRole);
 
   // Prevent hydration mismatch by only rendering client-specific elements after mount
   // and fetch userRole if not provided in props
