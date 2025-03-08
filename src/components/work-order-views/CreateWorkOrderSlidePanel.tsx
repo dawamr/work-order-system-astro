@@ -3,12 +3,7 @@ import { workOrderAPI, operatorsAPI } from '../../utils/api';
 import Button from '../Button';
 import { Datepicker } from 'flowbite-react';
 import { format, parse } from 'date-fns';
-
-interface Operator {
-  id: number;
-  username: string;
-}
-
+import type { Operator } from '../../types/user';
 interface CreateWorkOrderSlidePanelProps {
   isOpen: boolean;
   onClose: () => void;
