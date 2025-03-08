@@ -123,6 +123,7 @@ export const workOrderAPI = {
     const data: Record<string, any> = { status };
     if (quantity !== undefined) data.quantity = quantity;
     if (description !== undefined) data.description = description;
+    console.log(data);
     const response = await api.put(`/work-orders/${id}/status`, data);
     return response.data;
   },
