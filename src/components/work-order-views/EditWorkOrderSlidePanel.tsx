@@ -3,11 +3,12 @@ import { workOrderAPI, operatorsAPI } from '../../utils/api';
 import Button from '../Button';
 import { Datepicker } from 'flowbite-react';
 import { format, parseISO } from 'date-fns';
-import type { WorkOrder } from '../../types/workOrders';
 import localStorageOperations from '../../utils/localStorage';
 import type { UserRole } from '../../types/userRole';
 import type { Operator, ProductionManager } from '../../types/user';
 
+import type { WorkOrder } from '../../types/workOrders';
+import { hintProgressDesc } from '../../types/workOrders';
 interface EditWorkOrderSlidePanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,7 +17,7 @@ interface EditWorkOrderSlidePanelProps {
 }
 
 const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpen, onClose, onSuccess, workOrder }) => {
-  const [userRole, setUserRole] = useState<UserRole>(workOrder.operator.role);
+  const [userRole, setUserRole] = useState<UserRole>(workOrder?.operator?.role || 'operator');
   const [productName, setProductName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [targetQuantity, setTargetQuantity] = useState('');
@@ -31,6 +32,38 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
   const dropdownRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<string>(workOrder?.status || 'pending'); // Add status state
+  const [description, setDescription] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState({ start: 0, end: 0 });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Add status config after the imports
+  type StatusConfig = {
+    [key: string]: {
+      title: string;
+      allowedTransitions: string[];
+    };
+  };
+
+  const statusConfig: StatusConfig = {
+    pending: {
+      title: 'Pending',
+      allowedTransitions: ['in_progress', 'cancelled'],
+    },
+    in_progress: {
+      title: 'In Progress',
+      allowedTransitions: ['completed', 'cancelled'],
+    },
+    completed: {
+      title: 'Completed',
+      allowedTransitions: [],
+    },
+    cancelled: {
+      title: 'Cancelled',
+      allowedTransitions: [],
+    },
+  };
 
   // Dapatkan role pengguna saat komponen dimount
   useEffect(() => {
@@ -120,7 +153,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
 
     try {
       // Validate inputs
-      if (!productName.trim()) {
+      if (!productName.trim() && userRole === 'production_manager') {
         throw new Error('Product name is required');
       }
 
@@ -129,11 +162,11 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
       if (isNaN(quantityNum) || quantityNum <= 0) {
         throw new Error('Quantity must be a positive number');
       }
-      if (isNaN(targetQuantityNum) || targetQuantityNum <= 0) {
+      if (isNaN(targetQuantityNum) || (targetQuantityNum <= 0 && userRole === 'production_manager')) {
         throw new Error('Target quantity must be a positive number');
       }
 
-      if (!deadline) {
+      if (!deadline && userRole === 'production_manager') {
         throw new Error('Production deadline is required');
       }
 
@@ -150,13 +183,17 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
       }
 
       // Siapkan data untuk update
-      const updateData: Record<string, any> = {
-        product_name: productName.trim(),
-        quantity: quantityNum,
-        target_quantity: targetQuantityNum,
-        production_deadline: new Date(deadline).toISOString(),
-        status: status,
-      };
+      let updateData: Record<string, any> = {};
+      if (userRole === 'production_manager') {
+        updateData = {
+          quantity: quantityNum,
+          status: status,
+          operator_id: operatorIdNum,
+          product_name: productName.trim(),
+          production_deadline: new Date(deadline).toISOString(),
+          target_quantity: targetQuantityNum,
+        };
+      }
 
       // Hanya tambahkan operator_id jika userRole adalah manager
       if (userRole === 'production_manager' && operatorIdNum) {
@@ -164,7 +201,12 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
       }
 
       // Submit update
-      await workOrderAPI.update(workOrder.id, updateData);
+      if (userRole === 'production_manager') {
+        await workOrderAPI.update(workOrder.id, updateData);
+      }
+      if (userRole === 'operator') {
+        await workOrderAPI.updateStatus(workOrder.id, status, quantityNum);
+      }
 
       // Panggil onSuccess untuk trigger refresh
       onSuccess();
@@ -174,6 +216,68 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
       setError(err.message || 'Failed to update work order. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setDescription(value);
+
+    // Get cursor position
+    const cursorPos = e.target.selectionStart;
+
+    // Get the word being typed
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const words = textBeforeCursor.split(/\s+/);
+    const currentWord = words[words.length - 1];
+
+    // Check if the current word matches any hint descriptions
+    if (currentWord && currentWord.length > 0) {
+      const matchingSuggestions: string[] = [];
+      Object.entries(hintProgressDesc).forEach(([status, hints]) => {
+        hints.forEach((hint: string) => {
+          if (hint.toLowerCase().startsWith(currentWord.toLowerCase())) {
+            matchingSuggestions.push(hint);
+          }
+        });
+      });
+      setSuggestions(matchingSuggestions);
+      setSelectedSuggestionIndex(0);
+      setCursorPosition({ start: cursorPos - currentWord.length, end: cursorPos });
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (suggestions.length > 0) {
+      if (e.key === 'Tab' || e.key === 'Enter') {
+        e.preventDefault();
+        applySuggestion(suggestions[selectedSuggestionIndex]);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : prev));
+      } else if (e.key === 'Escape') {
+        setSuggestions([]);
+      }
+    }
+  };
+
+  const applySuggestion = (suggestion: string) => {
+    const beforeText = description.substring(0, cursorPosition.start);
+    const afterText = description.substring(cursorPosition.end);
+    const newText = `${beforeText}${suggestion}${afterText}`;
+    setDescription(newText);
+    setSuggestions([]);
+
+    // Focus and set cursor position after the inserted suggestion
+    if (textareaRef.current) {
+      const newCursorPos = cursorPosition.start + suggestion.length;
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
     }
   };
 
@@ -258,6 +362,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                       />
                     )}
                   </div>
+
                   <div>
                     <label
                       htmlFor='target-quantity'
@@ -349,18 +454,76 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                     <label htmlFor='status' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       Status
                     </label>
-                    <select
-                      id='status'
-                      className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                      required
-                    >
-                      <option value='pending'>Pending</option>
-                      <option value='in_progress'>In Progress</option>
-                      <option value='completed'>Completed</option>
-                      <option value='cancelled'>Cancelled</option>
-                    </select>
+                    {userRole === 'production_manager' && (
+                      <select
+                        id='status'
+                        className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        required
+                      >
+                        {Object.entries(statusConfig).map(([value, config]) => (
+                          <option key={value} value={value}>
+                            {config.title}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {userRole === 'operator' && (
+                      <select
+                        id='status'
+                        className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        required
+                      >
+                        <option value={workOrder.status} className='bg-blue-500/50 text-white'>
+                          {statusConfig[workOrder.status].title}
+                        </option>
+                        {statusConfig[workOrder.status].allowedTransitions.map((value) => (
+                          <option key={value} value={value}>
+                            {statusConfig[value].title}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Hint Description */}
+                  <div>
+                    <label htmlFor='status' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      Description
+                    </label>
+                    <div className='relative'>
+                      <textarea
+                        ref={textareaRef}
+                        id='message'
+                        rows={4}
+                        value={description}
+                        onChange={handleDescriptionChange}
+                        onKeyDown={handleKeyDown}
+                        className='block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
+                        placeholder='Write your thoughts here...'
+                      />
+
+                      {suggestions.length > 0 && (
+                        <div className='absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 max-h-60 overflow-auto'>
+                          {suggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              className={`px-4 py-2 cursor-pointer text-sm ${
+                                index === selectedSuggestionIndex
+                                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                              }`}
+                              onClick={() => applySuggestion(suggestion)}
+                            >
+                              {suggestion}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {userRole === 'production_manager' && (
