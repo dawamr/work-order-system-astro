@@ -1,25 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Table from '../Table';
 import type { TableColumn } from '../Table';
-import { Card } from '../Card';
 import { format } from 'date-fns';
-import Button from '../Button';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import { workOrderAPI } from '../../utils/api';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-
-interface WorkOrder {
-  id: number;
-  work_order_number: string;
-  product_name: string;
-  quantity: number;
-  production_deadline: string;
-  status: string;
-  operator: {
-    id: number;
-    username: string;
-  };
-}
+import localStorageOperations from '../../utils/localStorage';
+import type { WorkOrder } from '../../types/workOrders';
+import type { UserRole } from '../../types/userRole';
 
 interface TableViewProps {
   workOrders: WorkOrder[];
@@ -37,6 +25,14 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+
+  useEffect(() => {
+    const authData = localStorageOperations.getAuth();
+    if (authData?.user?.role) {
+      setUserRole(authData.user.role as UserRole);
+    }
+  }, []);
 
   const handleDeleteClick = (workOrder: WorkOrder) => {
     setSelectedWorkOrder(workOrder);
@@ -75,6 +71,11 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
           <div className='text-sm text-gray-500 dark:text-gray-400'>{row.product_name}</div>
         </div>
       ),
+    },
+    {
+      header: 'Target Quantity',
+      accessor: 'target_quantity',
+      cell: (value) => <span className='text-gray-900 dark:text-gray-100'>{value.toLocaleString()}</span>,
     },
     {
       header: 'Quantity',
@@ -157,19 +158,21 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
               <FaEdit className='w-4 h-4' />
             </span>
           </button>
-          <button
-            className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full
+          {userRole === 'production_manager' && (
+            <button
+              className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full
                      text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400
                      transition-colors duration-200'
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteClick(row);
-            }}
-          >
-            <span className='flex items-center'>
-              <FaTrash className='w-4 h-4' />
-            </span>
-          </button>
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick(row);
+              }}
+            >
+              <span className='flex items-center'>
+                <FaTrash className='w-4 h-4' />
+              </span>
+            </button>
+          )}
         </div>
       ),
     },
