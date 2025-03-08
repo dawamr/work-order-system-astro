@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { localStorageOperations } from '../utils/localStorage';
+import type { UserRole } from '../types/userRole';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>(initialUserRole);
+  const [userRole, setUserRole] = useState<UserRole>(initialUserRole || 'operator');
 
   // Prevent hydration mismatch by only rendering client-specific elements after mount
   // and fetch userRole if not provided in props
