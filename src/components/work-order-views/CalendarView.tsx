@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../Card';
+import type { WorkOrder } from '../../types/workOrders';
 import {
   format,
   startOfMonth,
@@ -12,19 +13,6 @@ import {
   parseISO,
   isSameDay,
 } from 'date-fns';
-
-interface WorkOrder {
-  id: number;
-  work_order_number: string;
-  product_name: string;
-  quantity: number;
-  production_deadline: string;
-  status: string;
-  operator: {
-    id: number;
-    username: string;
-  };
-}
 
 interface CalendarViewProps {
   workOrders: WorkOrder[];
