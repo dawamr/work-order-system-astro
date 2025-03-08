@@ -206,7 +206,7 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
               showFilterDropdown
                 ? 'opacity-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 -translate-y-4 pointer-events-none'
-            } ${isOperatorDropdownOpen ? 'h-[25rem]' : 'h-[18rem]'}`}
+            } ${isOperatorDropdownOpen ? 'h-[23rem]' : 'h-[15rem]'}`}
           >
             {/* Search Bar */}
             <div className='p-2 border-b border-gray-700'>
@@ -368,23 +368,6 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
               </div>
 
               {/* Quantity Filter */}
-              <div
-                className={`flex justify-between items-center p-2 rounded-md ${
-                  quantityFilter !== null ? 'bg-gray-700' : ''
-                }`}
-              >
-                <label className='text-sm font-medium w-1/4'>Quantity:</label>
-                <input
-                  type='number'
-                  className='bg-gray-700 w-full rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  value={quantityFilter === null ? '' : quantityFilter.toString()}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setQuantityFilter(value === '' ? null : Number(value));
-                    setCurrentPage(1);
-                  }}
-                />
-              </div>
 
               {/* Deadline Filter */}
               <div
