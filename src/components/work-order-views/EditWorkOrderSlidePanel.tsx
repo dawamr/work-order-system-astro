@@ -3,23 +3,23 @@ import { workOrderAPI, operatorsAPI } from '../../utils/api';
 import Button from '../Button';
 import { Datepicker } from 'flowbite-react';
 import { format, parseISO } from 'date-fns';
-import type { WorkOrder } from '../../types/workOrders'; // Import WorkOrder type
-
-interface Operator {
-  id: number;
-  username: string;
-}
+import type { WorkOrder } from '../../types/workOrders';
+import localStorageOperations from '../../utils/localStorage';
+import type { UserRole } from '../../types/userRole';
+import type { Operator, ProductionManager } from '../../types/user';
 
 interface EditWorkOrderSlidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  workOrder: WorkOrder; // Use WorkOrder type
+  workOrder: WorkOrder;
 }
 
 const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpen, onClose, onSuccess, workOrder }) => {
+  const [userRole, setUserRole] = useState<UserRole>(workOrder.operator.role);
   const [productName, setProductName] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [targetQuantity, setTargetQuantity] = useState('');
   const [deadline, setDeadline] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [operatorId, setOperatorId] = useState('');
@@ -32,11 +32,20 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
   const panelRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<string>(workOrder?.status || 'pending'); // Add status state
 
+  // Dapatkan role pengguna saat komponen dimount
+  useEffect(() => {
+    const authData = localStorageOperations.getAuth();
+    if (authData?.user?.role) {
+      setUserRole(authData.user.role as 'production_manager' | 'operator');
+    }
+  }, []);
+
   // Update form data when workOrder prop changes
   useEffect(() => {
     if (workOrder) {
       setProductName(workOrder.product_name || '');
       setQuantity(workOrder.quantity?.toString() || '');
+      setTargetQuantity(workOrder.target_quantity?.toString() || '');
 
       if (workOrder.production_deadline) {
         const date = parseISO(workOrder.production_deadline);
@@ -51,7 +60,9 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
 
   useEffect(() => {
     if (isOpen) {
-      fetchOperators();
+      if (userRole === 'production_manager') {
+        fetchOperators();
+      }
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -60,7 +71,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, userRole]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -114,27 +125,46 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
       }
 
       const quantityNum = parseInt(quantity);
+      const targetQuantityNum = parseInt(targetQuantity);
       if (isNaN(quantityNum) || quantityNum <= 0) {
         throw new Error('Quantity must be a positive number');
+      }
+      if (isNaN(targetQuantityNum) || targetQuantityNum <= 0) {
+        throw new Error('Target quantity must be a positive number');
       }
 
       if (!deadline) {
         throw new Error('Production deadline is required');
       }
 
-      const operatorIdNum = parseInt(operatorId);
-      if (isNaN(operatorIdNum)) {
-        throw new Error('Please select an operator');
+      // Hanya validasi operator_id jika userRole adalah manager
+      let operatorIdNum;
+      if (userRole === 'production_manager') {
+        operatorIdNum = parseInt(operatorId);
+        if (isNaN(operatorIdNum)) {
+          throw new Error('Please select an operator');
+        }
+      } else {
+        // Jika operator, gunakan operator_id dari workOrder yang ada
+        operatorIdNum = workOrder.operator?.id;
+      }
+
+      // Siapkan data untuk update
+      const updateData: Record<string, any> = {
+        product_name: productName.trim(),
+        quantity: quantityNum,
+        target_quantity: targetQuantityNum,
+        production_deadline: new Date(deadline).toISOString(),
+        status: status,
+      };
+
+      // Hanya tambahkan operator_id jika userRole adalah manager
+      if (userRole === 'production_manager' && operatorIdNum) {
+        updateData.operator_id = operatorIdNum;
       }
 
       // Submit update
-      await workOrderAPI.update(workOrder.id, {
-        product_name: productName.trim(),
-        quantity: quantityNum,
-        production_deadline: new Date(deadline).toISOString(),
-        operator_id: operatorIdNum,
-        status: status, // Include status in update
-      });
+      await workOrderAPI.update(workOrder.id, updateData);
 
       // Panggil onSuccess untuk trigger refresh
       onSuccess();
@@ -207,34 +237,52 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                     >
                       Product Name
                     </label>
-                    <input
-                      type='text'
-                      id='product-name'
-                      className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
-                      placeholder='Enter product name'
-                      value={productName}
-                      onChange={(e) => setProductName(e.target.value)}
-                      required
-                    />
+                    {userRole === 'production_manager' && (
+                      <input
+                        type='text'
+                        id='product-name'
+                        className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                        placeholder='Enter product name'
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
+                        required
+                      />
+                    )}
+                    {userRole === 'operator' && (
+                      <input
+                        type='text'
+                        id='product-name'
+                        className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                        value={productName}
+                        disabled
+                      />
+                    )}
                   </div>
-
                   <div>
                     <label
-                      htmlFor='quantity'
+                      htmlFor='target-quantity'
                       className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
                     >
-                      Quantity
+                      Target Quantity
                     </label>
-                    <input
-                      type='number'
-                      id='quantity'
-                      className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
-                      placeholder='Enter quantity'
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      min='1'
-                      required
-                    />
+                    {userRole === 'production_manager' && (
+                      <input
+                        type='number'
+                        id='target-quantity'
+                        className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                        value={targetQuantity}
+                        onChange={(e) => setTargetQuantity(e.target.value)}
+                      />
+                    )}
+                    {userRole === 'operator' && (
+                      <input
+                        type='number'
+                        id='target-quantity'
+                        className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                        value={targetQuantity}
+                        disabled
+                      />
+                    )}
                   </div>
 
                   <div>
@@ -254,16 +302,46 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                         required
                       />
 
-                      <Datepicker
-                        className='w-full'
-                        value={selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}
-                        onSelectedDateChanged={setSelectedDate}
-                        defaultDate={new Date()}
-                        showTodayButton={true}
-                        labelTodayButton='Today'
-                        theme={{}}
-                      />
+                      {userRole === 'production_manager' && (
+                        <Datepicker
+                          className='w-full'
+                          value={selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}
+                          onSelectedDateChanged={setSelectedDate}
+                          defaultDate={new Date()}
+                          showTodayButton={true}
+                          labelTodayButton='Today'
+                          theme={{}}
+                        />
+                      )}
+                      {userRole === 'operator' && (
+                        <input
+                          type='date'
+                          id='deadline'
+                          className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                          value={deadline}
+                          disabled
+                        />
+                      )}
                     </div>
+                  </div>
+                  <hr />
+                  <div>
+                    <label
+                      htmlFor='quantity'
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
+                      Quantity
+                    </label>
+                    <input
+                      type='number'
+                      id='quantity'
+                      className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                      placeholder='Enter quantity'
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      min='1'
+                      required
+                    />
                   </div>
 
                   {/* Status Select */}
@@ -285,122 +363,128 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                     </select>
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor='operator'
-                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
-                    >
-                      Assign to Operator
-                    </label>
-                    <div className='relative' ref={dropdownRef}>
-                      <button
-                        type='button'
-                        className='block w-full px-3 py-2 text-left border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm bg-white dark:bg-gray-700 flex justify-between items-center'
-                        onClick={() => setIsOperatorDropdownOpen(!isOperatorDropdownOpen)}
+                  {userRole === 'production_manager' && (
+                    <div>
+                      <label
+                        htmlFor='operator'
+                        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
                       >
-                        <span className={`${selectedOperator ? '' : 'text-gray-400'}`}>
-                          {selectedOperator ? selectedOperator.username : 'Select an operator'}
-                        </span>
-                        <svg
-                          className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
-                            isOperatorDropdownOpen ? 'transform rotate-180' : ''
-                          }`}
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                          xmlns='http://www.w3.org/2000/svg'
+                        Assign to Operator
+                      </label>
+                      <div className='relative' ref={dropdownRef}>
+                        <button
+                          type='button'
+                          className='block w-full px-3 py-2 text-left border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm bg-white dark:bg-gray-700 flex justify-between items-center'
+                          onClick={() => setIsOperatorDropdownOpen(!isOperatorDropdownOpen)}
                         >
-                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 9l-7 7-7-7'></path>
-                        </svg>
-                      </button>
+                          <span className={`${selectedOperator ? '' : 'text-gray-400'}`}>
+                            {selectedOperator ? selectedOperator.username : 'Select an operator'}
+                          </span>
+                          <svg
+                            className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                              isOperatorDropdownOpen ? 'transform rotate-180' : ''
+                            }`}
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                            xmlns='http://www.w3.org/2000/svg'
+                          >
+                            <path
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                              strokeWidth='2'
+                              d='M19 9l-7 7-7-7'
+                            ></path>
+                          </svg>
+                        </button>
 
-                      {isOperatorDropdownOpen && (
-                        // Dropdown operators - sama seperti CreateWorkOrderSlidePanel
-                        <div className='absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 py-1 max-h-60 overflow-auto transform transition-all duration-200 ease-in-out'>
-                          <div className='px-3 py-2 sticky top-0 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600'>
-                            <div className='relative'>
-                              <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                                <svg
-                                  className='h-4 w-4 text-gray-400'
-                                  fill='none'
-                                  stroke='currentColor'
-                                  viewBox='0 0 24 24'
-                                  xmlns='http://www.w3.org/2000/svg'
-                                >
-                                  <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth='2'
-                                    d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                                  ></path>
-                                </svg>
-                              </div>
-                              <input
-                                type='text'
-                                className='block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white'
-                                placeholder='Search operators...'
-                                value={operatorSearchTerm}
-                                onChange={(e) => setOperatorSearchTerm(e.target.value)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            {filteredOperators.length > 0 ? (
-                              filteredOperators.map((operator) => (
-                                <div
-                                  key={operator.id}
-                                  className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
-                                    operatorId === operator.id.toString()
-                                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                      : ''
-                                  }`}
-                                  onClick={() => {
-                                    setOperatorId(operator.id.toString());
-                                    setIsOperatorDropdownOpen(false);
-                                    setOperatorSearchTerm('');
-                                  }}
-                                >
-                                  <div className='flex items-center'>
-                                    <div className='h-8 w-8 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full flex items-center justify-center mr-3'>
-                                      {operator.username.charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className='text-sm font-medium text-truncate'>{operator.username}</span>
-                                  </div>
+                        {isOperatorDropdownOpen && (
+                          <div className='absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 py-1 max-h-60 overflow-auto transform transition-all duration-200 ease-in-out'>
+                            <div className='px-3 py-2 sticky top-0 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600'>
+                              <div className='relative'>
+                                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                  <svg
+                                    className='h-4 w-4 text-gray-400'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                    xmlns='http://www.w3.org/2000/svg'
+                                  >
+                                    <path
+                                      strokeLinecap='round'
+                                      strokeLinejoin='round'
+                                      strokeWidth='2'
+                                      d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                                    ></path>
+                                  </svg>
                                 </div>
-                              ))
-                            ) : (
-                              <div className='px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center'>
-                                No operators found
+                                <input
+                                  type='text'
+                                  className='block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white'
+                                  placeholder='Search operators...'
+                                  value={operatorSearchTerm}
+                                  onChange={(e) => setOperatorSearchTerm(e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              {filteredOperators.length > 0 ? (
+                                filteredOperators.map((operator) => (
+                                  <div
+                                    key={operator.id}
+                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                                      operatorId === operator.id.toString()
+                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                        : ''
+                                    }`}
+                                    onClick={() => {
+                                      setOperatorId(operator.id.toString());
+                                      setIsOperatorDropdownOpen(false);
+                                      setOperatorSearchTerm('');
+                                    }}
+                                  >
+                                    <div className='flex items-center'>
+                                      <div className='h-8 w-8 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full flex items-center justify-center mr-3'>
+                                        {operator.username.charAt(0).toUpperCase()}
+                                      </div>
+                                      <span className='text-sm font-medium text-truncate'>{operator.username}</span>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className='px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center'>
+                                  No operators found
+                                </div>
+                              )}
+                            </div>
+
+                            {operators.length > 10 && filteredOperators.length > 5 && (
+                              <div className='px-3 py-2 text-xs text-center text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600'>
+                                Showing {filteredOperators.length} of {operators.length} operators
                               </div>
                             )}
                           </div>
+                        )}
 
-                          {operators.length > 10 && filteredOperators.length > 5 && (
-                            <div className='px-3 py-2 text-xs text-center text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600'>
-                              Showing {filteredOperators.length} of {operators.length} operators
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <select
-                        id='operator'
-                        className='opacity-0 absolute h-0 w-0'
-                        value={operatorId}
-                        onChange={() => {}}
-                        required
-                      >
-                        <option value=''>Select an operator</option>
-                        {operators.map((operator) => (
-                          <option key={operator.id} value={operator.id.toString()}>
-                            {operator.username}
-                          </option>
-                        ))}
-                      </select>
+                        <select
+                          id='operator'
+                          className='opacity-0 absolute h-0 w-0'
+                          value={operatorId}
+                          onChange={() => {}}
+                          required
+                        >
+                          <option value=''>Select an operator</option>
+                          {operators.map((operator) => (
+                            <option key={operator.id} value={operator.id.toString()}>
+                              {operator.username}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className='border-t border-gray-200 dark:border-gray-700 mt-8 py-5'>
