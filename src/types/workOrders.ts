@@ -1,14 +1,15 @@
+import type { Operator, ProductionManager } from './user';
+
 export interface WorkOrder {
   id: number;
   work_order_number: string;
   product_name: string;
   quantity: number;
+  target_quantity: number;
   production_deadline: string;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | string;
-  operator: {
-    id: number;
-    username: string;
-  };
+  operator: Operator;
+  production_manager: ProductionManager;
 }
 
 export interface StatusConfig {
