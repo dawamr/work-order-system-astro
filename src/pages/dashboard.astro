@@ -1,11 +1,12 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import DashboardContent from '../components/DashboardContent';
+import type { UserRole } from '../types/userRole';
 
 // We'll handle authentication in client-side
 // This is just a placeholder for SSR
 const isAuthenticated = true;
-const userRole = null; // Will be set via client-side script
+const userRole: UserRole | null = null;
 ---
 
 <MainLayout title="Dashboard" isAuthenticated={isAuthenticated} userRole={userRole}>
