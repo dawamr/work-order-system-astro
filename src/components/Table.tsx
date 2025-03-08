@@ -1,5 +1,4 @@
 import React from 'react';
-import localStorageOperations from '../utils/localStorage';
 
 export interface TableColumn<T> {
   header: string;
