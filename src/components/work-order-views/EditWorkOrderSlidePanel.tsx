@@ -3,6 +3,7 @@ import { workOrderAPI, operatorsAPI } from '../../utils/api';
 import Button from '../Button';
 import { Datepicker } from 'flowbite-react';
 import { format, parseISO } from 'date-fns';
+import type { WorkOrder } from '../../types/workOrders'; // Import WorkOrder type
 
 interface Operator {
   id: number;
@@ -13,7 +14,7 @@ interface EditWorkOrderSlidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  workOrder: any; // Ganti 'any' dengan tipe WorkOrder yang sesuai
+  workOrder: WorkOrder; // Use WorkOrder type
 }
 
 const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpen, onClose, onSuccess, workOrder }) => {
@@ -29,6 +30,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
   const [isOperatorDropdownOpen, setIsOperatorDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<string>(workOrder?.status || 'pending'); // Add status state
 
   // Update form data when workOrder prop changes
   useEffect(() => {
@@ -43,6 +45,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
       }
 
       setOperatorId(workOrder.operator?.id?.toString() || '');
+      setStatus(workOrder.status || 'pending'); // Set initial status
     }
   }, [workOrder]);
 
@@ -130,6 +133,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
         quantity: quantityNum,
         production_deadline: new Date(deadline).toISOString(),
         operator_id: operatorIdNum,
+        status: status, // Include status in update
       });
 
       // Panggil onSuccess untuk trigger refresh
@@ -260,6 +264,25 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                         theme={{}}
                       />
                     </div>
+                  </div>
+
+                  {/* Status Select */}
+                  <div>
+                    <label htmlFor='status' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      Status
+                    </label>
+                    <select
+                      id='status'
+                      className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      required
+                    >
+                      <option value='pending'>Pending</option>
+                      <option value='in_progress'>In Progress</option>
+                      <option value='completed'>Completed</option>
+                      <option value='cancelled'>Cancelled</option>
+                    </select>
                   </div>
 
                   <div>
