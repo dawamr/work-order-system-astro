@@ -2,11 +2,11 @@
 import '../styles/global.css';
 import DashboardLayout from '../components/DashboardLayout';
 import ThemeToggle from '../components/ThemeToggle';
-
+import type { UserRole } from '../types/userRole';
 interface Props {
   title: string;
   isAuthenticated?: boolean;
-  userRole?: 'production_manager' | 'operator' | null;
+  userRole?: UserRole | null;
   useDashboardLayout?: boolean;
 }
 
