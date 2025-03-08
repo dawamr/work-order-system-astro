@@ -1,18 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-
-interface WorkOrder {
-  id: number;
-  work_order_number: string;
-  product_name: string;
-  quantity: number;
-  production_deadline: string;
-  status: string;
-  operator: {
-    id: number;
-    username: string;
-  };
-}
+import type { WorkOrder } from '../../types/workOrders';
 
 interface KanbanViewProps {
   groups: { [key: string]: WorkOrder[] };
@@ -130,7 +118,7 @@ const KanbanView: React.FC<KanbanViewProps> = ({ groups, groupBy, isLoading, onC
         let headerClasses = '';
 
         if (groupBy === 'status') {
-          const status = statusConfig[groupKey];
+          const status = statusConfig[groupKey as keyof typeof statusConfig];
           title = status?.title || groupKey;
           headerClasses = `${status?.headerColor || 'bg-gray-100'} ${status?.textColor || 'text-gray-800'}`;
         } else {
