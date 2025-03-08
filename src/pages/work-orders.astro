@@ -3,11 +3,12 @@ import MainLayout from '../layouts/MainLayout.astro';
 import WorkOrderList from '../components/WorkOrderList';
 import CreateWorkOrderSlidePanel from '../components/work-order-views/CreateWorkOrderSlidePanel';
 import EditWorkOrderSlidePanel from '../components/work-order-views/EditWorkOrderSlidePanel';
-
+import type { UserRole } from '../types/userRole';
+import type { WorkOrder } from '../types/workOrders';
 // We'll handle authentication in client-side
 // This is just a placeholder for SSR
 const isAuthenticated = true;
-const userRole = null; // Will be set via client-side script
+const userRole: UserRole | null = null; // Will be set via client-side script
 ---
 
 <MainLayout title="Work Orders" isAuthenticated={isAuthenticated} userRole={userRole}>
@@ -35,13 +36,14 @@ const userRole = null; // Will be set via client-side script
   import CreateWorkOrderSlidePanel from '../components/work-order-views/CreateWorkOrderSlidePanel';
   import EditWorkOrderSlidePanel from '../components/work-order-views/EditWorkOrderSlidePanel';
   import React from 'react';
+  import type { WorkOrder } from '../types/workOrders';
 
   // Setup untuk edit panel
   const setupEditPanel = () => {
     const editPanelContainer = document.getElementById('editWorkOrderPanelContainer');
     if (editPanelContainer) {
       let isEditPanelOpen = false;
-      let currentWorkOrder = null;
+      let currentWorkOrder: WorkOrder | null = null;
       const editRoot = createRoot(editPanelContainer);
 
       const renderEditPanel = () => {
