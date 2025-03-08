@@ -1,161 +1,108 @@
 import axios from 'axios';
-import type { AxiosRequestConfig } from 'axios';
 import { localStorageOperations } from './localStorage';
 import { API_URL } from 'astro:env/client';
 
-// Create axios instance
+// Membuat instance axios dengan konfigurasi dasar
 const api = axios.create({
-  baseURL: API_URL ? API_URL : 'https://api.workorder.dawam.dev',
+  baseURL: API_URL || 'https://api.workorder.dawam.dev',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Interceptor untuk menambahkan header Authorization
 api.interceptors.request.use(
   async (config) => {
     console.log('Request Interceptor dijalankan');
     try {
       const authData = localStorageOperations.getAuth();
-      console.log('Auth Data:', authData); // Debugging
-      if (authData?.token && config.headers) {
+      if (authData?.token) {
         config.headers.Authorization = `Bearer ${authData.token}`;
         console.log('Auth Header Set:', config.headers.Authorization); // Debugging
       }
       return config;
     } catch (error) {
-      console.error('Error getting auth token from Local Storage:', error);
-      console.error('Interceptor Error:', error);
+      console.error('Error di request interceptor:', error);
       return config;
     }
   },
-  (error) => {
-    console.error('Request Interceptor Error (Promise Reject):', error);
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
-// Interceptor to handle response errors
+// Interceptor untuk menangani error respons (misalnya, 401 Unauthorized)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Handle unauthorized errors
-    if (error.response && error.response.status === 401) {
+    if (error.response?.status === 401) {
       try {
         await localStorageOperations.clearAuth();
-        // Redirect to login page if not already there
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
       } catch (dbError) {
-        console.error('Error clearing auth data from Local Storage:', dbError);
+        console.error('Error saat membersihkan auth data:', dbError);
       }
     }
     return Promise.reject(error);
   },
 );
 
-// Auth API
+// API untuk autentikasi
 export const authAPI = {
+  /** Login pengguna dengan username dan password */
   login: async (username: string, password: string) => {
     const response = await api.post('/auth/login', { username, password });
     return response.data;
   },
 
+  /** Registrasi pengguna baru dengan role tertentu */
   register: async (username: string, password: string, role: 'production_manager' | 'operator') => {
     const response = await api.post('/auth/register', { username, password, role });
     return response.data;
   },
 };
 
-// Work Orders API
+// API untuk manajemen work orders
 export const workOrderAPI = {
-  // Get all work orders (Production Manager)
+  /** Mengambil semua work order dengan parameter filter (Production Manager) */
   getAll: async (params: Record<string, any>) => {
     const response = await api.get('/work-orders', { params });
     return response.data;
   },
 
-  // Get assigned work orders (Operator)
+  /** Mengambil work order yang ditugaskan ke operator dengan pagination dan filter status */
   getAssigned: async (page: number = 1, limit: number = 10, status?: string) => {
     const params: Record<string, any> = { page, limit };
     if (status) params.status = status;
-
     const response = await api.get('/work-orders/assigned', { params });
     return response.data;
   },
 
-  // Get work order by ID
+  /** Mengambil detail work order berdasarkan ID */
   getById: async (id: number) => {
     const response = await api.get(`/work-orders/${id}`);
     return response.data;
   },
 
+  /** Mengambil log audit untuk work order tertentu */
   getAuditLogs: async (id: number) => {
-    //   {
-    //     "error": false,
-    //     "logs": [
-    //         {
-    //             "id": 8,
-    //             "user_id": 1,
-    //             "user": {
-    //                 "id": 1,
-    //                 "username": "manager",
-    //                 "role": "production_manager",
-    //                 "created_at": "2025-03-05T23:22:54.35481+07:00",
-    //                 "updated_at": "2025-03-05T23:22:54.35481+07:00"
-    //             },
-    //             "action": "update",
-    //             "entity_id": 205,
-    //             "entity_type": "WorkOrder",
-    //             "old_values": {
-    //                 "quantity": 8
-    //             },
-    //             "new_values": {
-    //                 "quantity": 9
-    //             },
-    //             "note": "Work order WO-20250306-004 updated",
-    //             "created_at": "2025-03-06T11:01:35.954318+07:00"
-    //         },
-    //         {
-    //             "id": 7,
-    //             "user_id": 1,
-    //             "user": {
-    //                 "id": 1,
-    //                 "username": "manager",
-    //                 "role": "production_manager",
-    //                 "created_at": "2025-03-05T23:22:54.35481+07:00",
-    //                 "updated_at": "2025-03-05T23:22:54.35481+07:00"
-    //             },
-    //             "action": "update",
-    //             "entity_id": 205,
-    //             "entity_type": "WorkOrder",
-    //             "old_values": {
-    //                 "quantity": 5
-    //             },
-    //             "new_values": {
-    //                 "quantity": 8
-    //             },
-    //             "note": "Work order WO-20250306-004 updated",
-    //             "created_at": "2025-03-06T10:57:26.457733+07:00"
-    //         }
-    //     ]
-    // }
     const response = await api.get(`/work-orders/${id}/logs`);
     return response.data;
   },
 
-  // Create work order (Production Manager)
+  /** Membuat work order baru (Production Manager) */
   create: async (workOrder: {
     product_name: string;
     quantity: number;
     production_deadline: string;
     operator_id: number;
+    target_quantity: number;
   }) => {
     const response = await api.post('/work-orders', workOrder);
     return response.data;
   },
 
-  // Update work order (Production Manager)
+  /** Memperbarui detail work order (Production Manager) */
   update: async (
     id: number,
     workOrder: {
@@ -164,83 +111,84 @@ export const workOrderAPI = {
       production_deadline?: string;
       status?: string;
       operator_id?: number;
+      target_quantity?: number;
     },
   ) => {
     const response = await api.put(`/work-orders/${id}`, workOrder);
     return response.data;
   },
 
-  // Update work order status (Operator)
-  updateStatus: async (id: number, status: string, quantity?: number) => {
+  /** Memperbarui status work order (Operator) */
+  updateStatus: async (id: number, status: string, quantity?: number, description?: string) => {
     const data: Record<string, any> = { status };
     if (quantity !== undefined) data.quantity = quantity;
-
+    if (description !== undefined) data.description = description;
     const response = await api.put(`/work-orders/${id}/status`, data);
     return response.data;
   },
 
-  // Record progress
+  /** Menambahkan catatan progres untuk work order */
   addProgress: async (id: number, progressData: { progress_description: string; progress_quantity: number }) => {
     const response = await api.post(`/work-orders/${id}/progress`, progressData);
     return response.data;
   },
 
-  // Get progress records
+  /** Mengambil catatan progres untuk work order tertentu */
   getProgress: async (id: number) => {
     const response = await api.get(`/work-orders/${id}/progress`);
     return response.data;
   },
 
-  // Get status history
+  /** Mengambil riwayat status work order */
   getStatusHistory: async (id: number) => {
     const response = await api.get(`/work-orders/${id}/history`);
     return response.data;
   },
 
+  /** Menghapus work order berdasarkan ID (Production Manager) */
   delete: async (id: number) => {
     const response = await api.delete(`/work-orders/${id}`);
     return response.data;
   },
 
-  // Add custom log/note to work order
+  /** Menambahkan catatan khusus ke log work order */
   addCustomLog: async (id: number, data: { note: string }) => {
     const response = await api.post(`/work-orders/${id}/logs`, data);
     return response.data;
   },
 };
 
-// Reports API
+// API untuk laporan
 export const reportsAPI = {
-  // Get work orders summary by status
+  /** Mengambil ringkasan work order berdasarkan status dengan rentang tanggal opsional */
   getSummary: async (startDate?: string, endDate?: string) => {
     const params: Record<string, any> = {};
     if (startDate) params.start_date = startDate;
     if (endDate) params.end_date = endDate;
-
     const response = await api.get('/reports/summary', { params });
     return response.data;
   },
 
-  // Get operator performance
+  /** Mengambil performa operator dengan rentang tanggal opsional */
   getOperatorPerformance: async (startDate?: string, endDate?: string) => {
     const params: Record<string, any> = {};
     if (startDate) params.start_date = startDate;
     if (endDate) params.end_date = endDate;
-
     const response = await api.get('/reports/operators', { params });
     return response.data;
   },
 };
 
-// Operators API
+// API untuk operator
 export const operatorsAPI = {
-  // Get all operators
+  /** Mengambil daftar semua operator */
   getAll: async () => {
     const response = await api.get('/operators');
     return response.data;
   },
 };
 
+// Ekspor semua API sebagai objek terstruktur
 export default {
   auth: authAPI,
   workOrders: workOrderAPI,
