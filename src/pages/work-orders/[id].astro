@@ -2,10 +2,11 @@
 export const prerender = false;
 import MainLayout from '../../layouts/MainLayout.astro';
 import WorkOrderDetail from '../../components/WorkOrderDetail';
+import type { UserRole } from '../../types/userRole';
 
 // Proteksi rute dan otentikasi akan di handle di client side
 const isAuthenticated = true;
-const userRole = null;
+const userRole: UserRole | null = null;
 
 const { id } = Astro.params;
 console.log('Astro.params.id:', id);
@@ -16,7 +17,7 @@ console.log('Astro.params.id:', id);
     <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Work Order Detail</h1>
   </div>
 
-  <WorkOrderDetail id={id} client:load />
+  <WorkOrderDetail id={id as string} client:load />
 </MainLayout>
 
 <script>
