@@ -205,7 +205,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
         await workOrderAPI.update(workOrder.id, updateData);
       }
       if (userRole === 'operator') {
-        await workOrderAPI.updateStatus(workOrder.id, status, quantityNum);
+        await workOrderAPI.updateStatus(workOrder.id, status, quantityNum, description);
       }
 
       // Panggil onSuccess untuk trigger refresh
