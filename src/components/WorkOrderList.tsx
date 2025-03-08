@@ -6,10 +6,8 @@ import { operatorsAPI, workOrderAPI } from '../utils/api';
 import Button from './Button';
 import PopupCard from './PopupCard';
 import type { WorkOrder } from '../types/workOrders';
-
-interface WorkOrderListProps {
-  type: 'manager' | 'operator';
-}
+import type { UserRole } from '../types/userRole';
+import type { Operator } from '../types/user';
 
 type ViewMode = 'table' | 'kanban-status' | 'kanban-operator' | 'calendar';
 
@@ -26,9 +24,8 @@ interface WorkOrderListResponse {
   pagination: Pagination;
 }
 
-interface Operator {
-  id: number;
-  username: string;
+interface WorkOrderListProps {
+  type: UserRole;
 }
 
 const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
@@ -74,11 +71,19 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
       const params: Record<string, any> = { page };
       if (searchQuery) params.search = searchQuery;
       if (statusFilter) params.status = statusFilter;
-      if (operatorFilter) params.operator_id = operatorFilter;
       if (quantityFilter !== null) params.quantity = quantityFilter;
       if (deadlineFilter) params.production_deadline = deadlineFilter;
 
-      const response: WorkOrderListResponse = await workOrderAPI.getAll(params);
+      let response: WorkOrderListResponse;
+      if (type === 'production_manager') {
+        // Production Manager: Fetch all work orders
+        if (operatorFilter) params.operator_id = operatorFilter;
+        response = await workOrderAPI.getAll(params);
+      } else {
+        // Operator: Fetch assigned work orders
+        response = await workOrderAPI.getAssigned(page, 10, statusFilter);
+      }
+
       setWorkOrders(response.work_orders);
       setPagination(response.pagination);
     } catch (err: any) {
@@ -110,20 +115,22 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
 
   // useEffect for fetching operators (runs once on mount)
   useEffect(() => {
-    fetchOperators();
-  }, []);
+    if (type === 'production_manager') {
+      fetchOperators();
+    }
+  }, [type]);
 
   // useEffect for fetching work orders (triggered by filter changes)
   useEffect(() => {
     fetchWorkOrders(currentPage);
-  }, [currentPage, searchQuery, statusFilter, operatorFilter, quantityFilter, deadlineFilter]);
+  }, [currentPage, searchQuery, statusFilter, operatorFilter, quantityFilter, deadlineFilter, type]);
 
   // Event listener for refreshWorkOrders
   useEffect(() => {
     const handleRefresh = () => fetchWorkOrders(currentPage);
     document.addEventListener('refreshWorkOrders', handleRefresh);
     return () => document.removeEventListener('refreshWorkOrders', handleRefresh);
-  }, [currentPage]);
+  }, [currentPage, type]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -235,118 +242,121 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
             {/* Filter Categories */}
             <div className='p-2'>
               {/* Operator Filter */}
-              <div
-                className={`flex justify-between items-center p-2 rounded-md ${operatorFilter ? 'bg-gray-700' : ''}`}
-              >
-                <label className='text-sm font-medium w-1/4'>Operator:</label>
-                <div className='w-full' ref={dropdownRef}>
-                  <button
-                    type='button'
-                    className='block w-full px-3 py-2 text-left border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm bg-white dark:bg-gray-700 flex justify-between items-center'
-                    onClick={() => setIsOperatorDropdownOpen(!isOperatorDropdownOpen)}
-                  >
-                    <span className={`${selectedOperator ? '' : 'text-gray-400'}`}>
-                      {selectedOperator ? selectedOperator.username : 'Select an operator'}
-                    </span>
-                    <svg
-                      className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
-                        isOperatorDropdownOpen ? 'transform rotate-180' : ''
-                      }`}
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
+              {/* type !== 'operator' */}
+              {type !== 'operator' && (
+                <div
+                  className={`flex justify-between items-center p-2 rounded-md ${operatorFilter ? 'bg-gray-700' : ''}`}
+                >
+                  <label className='text-sm font-medium w-1/4'>Operator:</label>
+                  <div className='w-full' ref={dropdownRef}>
+                    <button
+                      type='button'
+                      className='block w-full px-3 py-2 text-left border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm bg-white dark:bg-gray-700 flex justify-between items-center'
+                      onClick={() => setIsOperatorDropdownOpen(!isOperatorDropdownOpen)}
                     >
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 9l-7 7-7-7'></path>
-                    </svg>
-                  </button>
+                      <span className={`${selectedOperator ? '' : 'text-gray-400'}`}>
+                        {selectedOperator ? selectedOperator.username : 'Select an operator'}
+                      </span>
+                      <svg
+                        className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                          isOperatorDropdownOpen ? 'transform rotate-180' : ''
+                        }`}
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 9l-7 7-7-7'></path>
+                      </svg>
+                    </button>
 
-                  {isOperatorDropdownOpen && (
-                    <div className='absolute z-11 mt-1 w-80 bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 py-1 max-h-60 overflow-auto transform transition-all duration-200 ease-in-out'>
-                      <div className='px-3 py-2 sticky top-0 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600'>
-                        <div className='relative'>
-                          <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                            <svg
-                              className='h-4 w-4 text-gray-400'
-                              fill='none'
-                              stroke='currentColor'
-                              viewBox='0 0 24 24'
-                            >
-                              <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                strokeWidth='2'
-                                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                              ></path>
-                            </svg>
-                          </div>
-                          <input
-                            type='text'
-                            className='block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white'
-                            placeholder='Search operators...'
-                            value={operatorSearchTerm}
-                            onChange={(e) => setOperatorSearchTerm(e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        {filteredOperators.length > 0 ? (
-                          filteredOperators.map((operator) => (
-                            <div
-                              key={operator.id}
-                              className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
-                                operatorId === operator.id.toString()
-                                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                  : ''
-                              }`}
-                              onClick={() => {
-                                setOperatorFilter(operator.id.toString());
-                                setOperatorId(operator.id.toString());
-                                setIsOperatorDropdownOpen(false);
-                                setOperatorSearchTerm('');
-                                setCurrentPage(1);
-                              }}
-                            >
-                              <div className='flex items-center'>
-                                <div className='h-6 w-8 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full flex items-center justify-center mr-3'>
-                                  {operator.username.charAt(0).toUpperCase()}
-                                </div>
-                                <span className='text-sm font-medium text-truncate'>{operator.username}</span>
-                              </div>
+                    {isOperatorDropdownOpen && (
+                      <div className='absolute z-11 mt-1 w-80 bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 py-1 max-h-60 overflow-auto transform transition-all duration-200 ease-in-out'>
+                        <div className='px-3 py-2 sticky top-0 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600'>
+                          <div className='relative'>
+                            <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                              <svg
+                                className='h-4 w-4 text-gray-400'
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'
+                              >
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  strokeWidth='2'
+                                  d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                                ></path>
+                              </svg>
                             </div>
-                          ))
-                        ) : (
-                          <div className='px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center'>
-                            No operators found
+                            <input
+                              type='text'
+                              className='block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white'
+                              placeholder='Search operators...'
+                              value={operatorSearchTerm}
+                              onChange={(e) => setOperatorSearchTerm(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          {filteredOperators.length > 0 ? (
+                            filteredOperators.map((operator) => (
+                              <div
+                                key={operator.id}
+                                className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                                  operatorId === operator.id.toString()
+                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                    : ''
+                                }`}
+                                onClick={() => {
+                                  setOperatorFilter(operator.id.toString());
+                                  setOperatorId(operator.id.toString());
+                                  setIsOperatorDropdownOpen(false);
+                                  setOperatorSearchTerm('');
+                                  setCurrentPage(1);
+                                }}
+                              >
+                                <div className='flex items-center'>
+                                  <div className='h-6 w-8 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full flex items-center justify-center mr-3'>
+                                    {operator.username.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className='text-sm font-medium text-truncate'>{operator.username}</span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className='px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center'>
+                              No operators found
+                            </div>
+                          )}
+                        </div>
+
+                        {operators.length > 10 && filteredOperators.length > 5 && (
+                          <div className='px-3 py-2 text-xs text-center text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600'>
+                            Showing {filteredOperators.length} of {operators.length} operators
                           </div>
                         )}
                       </div>
+                    )}
 
-                      {operators.length > 10 && filteredOperators.length > 5 && (
-                        <div className='px-3 py-2 text-xs text-center text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600'>
-                          Showing {filteredOperators.length} of {operators.length} operators
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <select
-                    id='operator'
-                    className='opacity-0 absolute h-0 w-0'
-                    value={operatorId}
-                    onChange={() => {}}
-                    required
-                  >
-                    <option value=''>Select an operator</option>
-                    {operators.map((operator) => (
-                      <option key={operator.id} value={operator.id.toString()}>
-                        {operator.username}
-                      </option>
-                    ))}
-                  </select>
+                    <select
+                      id='operator'
+                      className='opacity-0 absolute h-0 w-0'
+                      value={operatorId}
+                      onChange={() => {}}
+                      required
+                    >
+                      <option value=''>Select an operator</option>
+                      {operators.map((operator) => (
+                        <option key={operator.id} value={operator.id.toString()}>
+                          {operator.username}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Status Filter */}
               <div className={`flex justify-between items-center p-2 rounded-md ${statusFilter ? 'bg-gray-700' : ''}`}>
@@ -427,24 +437,26 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
               </svg>
               Kanban Status
             </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium ${
-                viewMode === 'kanban-operator'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
-              }`}
-              onClick={() => setViewMode('kanban-operator')}
-            >
-              <svg className='w-5 h-5 inline-block mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'
-                />
-              </svg>
-              Kanban Operator
-            </button>
+            {type !== 'operator' && (
+              <button
+                className={`px-4 py-2 text-sm font-medium ${
+                  viewMode === 'kanban-operator'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setViewMode('kanban-operator')}
+              >
+                <svg className='w-5 h-5 inline-block mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth='2'
+                    d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'
+                  />
+                </svg>
+                Kanban Operator
+              </button>
+            )}
             <button
               className={`px-4 py-2 text-sm font-medium ${
                 viewMode === 'calendar'
@@ -482,10 +494,10 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
           groups={getWorkOrdersByStatus()}
           groupBy='status'
           isLoading={isLoading}
-          onCardClick={handleRowClick}
+          onCardClick={handleRowClick as (workOrder: WorkOrder) => void}
         />
       )}
-      {viewMode === 'kanban-operator' && (
+      {viewMode === 'kanban-operator' && type !== 'operator' && (
         <KanbanView
           groups={getWorkOrdersByOperator()}
           groupBy='operator'
