@@ -12,6 +12,15 @@ export interface WorkOrder {
   production_manager: ProductionManager;
 }
 
+export interface ProgressLog {
+  id: number;
+  work_order_id: number;
+  progress_description: string;
+  progress_quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface StatusConfig {
   [key: string]: {
     title: string;
