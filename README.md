@@ -1,48 +1,131 @@
-# Astro Starter Kit: Basics
+# Work Order Management System
 
-```sh
-npm create astro@latest -- --template basics
-```
+## Overview
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+Work Order Management System adalah aplikasi web yang dirancang untuk mengelola dan melacak work order dalam lingkungan produksi. Aplikasi ini memungkinkan Production Manager untuk membuat, menjadwalkan, dan memantau work order, sementara Operator dapat melihat work order yang ditugaskan, memperbarui status, dan mencatat progres.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Tech Stack
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+- **Frontend**:
+  - [Astro](https://astro.build/): Framework web untuk membangun website yang cepat dengan performa optimal.
+  - [React.js](https://reactjs.org/): Library JavaScript untuk membangun UI interaktif.
+  - [Tailwind CSS](https://tailwindcss.com/): Framework CSS utility-first untuk styling yang cepat dan responsif.
+  - [Lucide React](https://lucide.dev/): Library icon untuk antarmuka pengguna.
+  - [Flowbite](https://flowbite.com/): Library komponen UI untuk React dan Tailwind CSS.
+  - [Axios](https://axios-http.com/): Library untuk membuat HTTP request.
+  - [Date-fns](https://date-fns.org/): Library untuk memformat tanggal.
+- **Backend**:
+  - Golang
+- **Database**:
+  - PostgreSQL
 
-## 🚀 Project Structure
+## Features
 
-Inside of your Astro project, you'll see the following folders and files:
+- **Autentikasi**: Login dan registrasi pengguna dengan role Production Manager dan Operator.
+- **Manajemen Work Order**:
+  - Membuat, membaca, memperbarui, dan menghapus work order (CRUD).
+  - Menetapkan work order ke operator.
+  - Memperbarui status work order (pending, in progress, completed, cancelled).
+  - Menambah catatan progres pada work order.
+  - Melihat riwayat status work order.
+- **Laporan**:
+  - Ringkasan work order berdasarkan status.
+  - Laporan kinerja operator.
+  - Filter laporan berdasarkan rentang tanggal.
+- **UI Responsif**: Tampilan yang optimal di berbagai perangkat.
+- **Dark Mode**: Pilihan tema terang dan gelap.
 
-```text
-/
-├── public/
-│   └── favicon.svg
+## Folder Structure
+
+```shell
+work-order-system-astro/
 ├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
+│ ├── components/ # Reusable UI components
+│ │ ├── work-order-views/ # Work order specific components
+│ │ ├── reports/ # Report specific components
+│ ├── layouts/ # Global layouts
+│ ├── pages/ # Pages & routing
+│ ├── utils/ # Helper functions
+│ │ ├── api.ts # API interaction
+│ │ ├── localStorage.ts # Local storage operations
+│ ├── types/ # TypeScript type definitions
+│ │ ├── workOrders.ts # Work order types
+│ ├── styles/ # Global styles
+│ │ ├── global.css # Global CSS file
+│ ├── env.d.ts # Environment variables type definition
+├── public/ # Static files
+├── astro.config.mjs # Astro configuration file
+├── tailwind.config.js # Tailwind CSS configuration file
+├── postcss.config.js # PostCSS configuration file
+├── package.json # Dependencies and scripts
+├── README.md # Project documentation
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Installation
 
-## 🧞 Commands
+### Prerequisites
 
-All commands are run from the root of the project, from a terminal:
+- [Node.js](https://nodejs.org/) (v18 atau lebih baru)
+- [npm](https://www.npmjs.com/) atau [yarn](https://yarnpkg.com/)
+- Backend API yang sudah berjalan (pastikan `API_URL` diatur dengan benar)
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### Setup Instructions
 
-## 👀 Want to learn more?
+1.  Clone the repository
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+    ```bash
+    git clone https://github.com/username/work-order-management-system.git
+    cd work-order-management-system
+    ```
+
+2.  Install dependencies
+
+    ```bash
+    npm install
+    # atau
+    yarn install
+    ```
+
+3.  Konfigurasi environment variables
+
+    - Buat file `.env` di root project (jika belum ada).
+    - Tambahkan variabel `API_URL` dengan URL backend API Anda.
+
+      ```
+      API_URL=http://localhost:8080
+      ```
+
+      > **Catatan:** Anda dapat melihat konfigurasi `API_URL` pada `astro.config.mjs`
+
+4.  Jalankan development server
+
+    ```bash
+    npm run dev
+    # atau
+    yarn dev
+    ```
+
+5.  Buka browser dan akses `http://localhost:4321`
+
+## Usage
+
+- Buka halaman login untuk mengakses aplikasi. (http://localhost:4321 / https://workoder.dawam.dev)
+- Gunakan kredensial demo berikut:
+  - **Production Manager**: `manager` / `password`
+  - **Operator**: `operator1` / `password`
+- Production Manager dapat mengakses dashboard untuk mengelola work order dan laporan.
+- Operator dapat mengakses halaman assigned orders untuk melihat dan memperbarui work order yang ditugaskan.
+
+## Contributing
+
+Jika Anda ingin berkontribusi pada project ini, silakan fork repository dan buat pull request.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
+## Contact
+
+Dawam Raja - [dawam.dev](https://dawam.dev)
+
+Project Link: [https://github.com/dawamr/work-order-system-astro](https://github.com/dawamr/work-order-system-astro)
