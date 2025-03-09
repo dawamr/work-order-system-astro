@@ -15,5 +15,12 @@ export default defineConfig({
   },
   integrations: [tailwind(), react()],
   output: 'server',
-  adapter: cloudflare(),
+  adapter: node({
+    mode: 'standalone',
+  }),
+  vite: {
+    define: {
+      'process.env.TZ': JSON.stringify('Asia/Jakarta'),
+    },
+  },
 });
