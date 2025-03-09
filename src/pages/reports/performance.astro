@@ -1,0 +1,14 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import PerformancePage from '../../components/reports/PerformancePage';
+import type { UserRole } from '../../types/userRole';
+
+// We'll handle authentication in client-side
+// This is just a placeholder for SSR
+const isAuthenticated = true;
+const userRole: UserRole | null = null;
+---
+
+<MainLayout title="Performance Reports" isAuthenticated={isAuthenticated} userRole={userRole}>
+  <PerformancePage client:load />
+</MainLayout>
