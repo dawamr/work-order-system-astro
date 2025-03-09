@@ -68,7 +68,7 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
       cell: (value, row) => (
         <div className='text-gray-900 dark:text-gray-100'>
           <div className='font-medium'>{value}</div>
-          <div className='text-sm text-gray-500 dark:text-gray-400'>{row.product_name}</div>
+          <div className='text-sm text-gray-500 dark:text-gray-400'>{row?.product_name}</div>
         </div>
       ),
     },
@@ -151,7 +151,9 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
                 detail: { workOrder: row },
               });
               document.dispatchEvent(event);
-              onEditClick(row);
+              if (row && onEditClick) {
+                onEditClick(row);
+              }
             }}
           >
             <span className='flex items-center'>
@@ -165,7 +167,9 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
                      transition-colors duration-200'
               onClick={(e) => {
                 e.stopPropagation();
-                handleDeleteClick(row);
+                if (row) {
+                  handleDeleteClick(row);
+                }
               }}
             >
               <span className='flex items-center'>
@@ -180,20 +184,12 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
 
   return (
     <div className='bg-white dark:bg-gray-800 rounded-lg shadow'>
-      <Table
-        columns={columns}
-        data={workOrders}
-        isLoading={isLoading}
-        onRowClick={onRowClick}
-        className='w-full'
-        rowClassName='hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors duration-200'
-      />
+      <Table columns={columns} data={workOrders} isLoading={isLoading} onRowClick={onRowClick} className='w-full' />
 
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleConfirmDelete}
-        isDeleting={isDeleting}
         title='Delete Work Order'
         message={`Are you sure you want to delete work order ${selectedWorkOrder?.work_order_number}?`}
       />
