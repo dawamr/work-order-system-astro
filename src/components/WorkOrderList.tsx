@@ -8,7 +8,8 @@ import PopupCard from './PopupCard';
 import type { WorkOrder } from '../types/workOrders';
 import type { UserRole } from '../types/userRole';
 import type { Operator } from '../types/user';
-
+import { localStorageOperations } from '../utils/localStorage';
+import Loading from './Loading';
 type ViewMode = 'table' | 'kanban-status' | 'kanban-operator' | 'calendar';
 
 interface Pagination {
@@ -30,6 +31,7 @@ interface WorkOrderListProps {
 
 const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
   // State variables
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,29 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
     { value: 'completed', label: 'Completed' },
     { value: 'cancelled', label: 'Cancelled' },
   ];
+
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  const checkAuthentication = async () => {
+    try {
+      // Check authentication
+      const authData = localStorageOperations.getAuth();
+      if (!authData?.token || authData.user.role !== 'production_manager') {
+        // Redirect to login in client-side
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+        return;
+      }
+
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      setError('Authentication error. Please try again.');
+    }
+  };
 
   // Fetch work orders with updated parameters
   const fetchWorkOrders = async (page: number = 1) => {
@@ -186,6 +211,10 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
     });
     return operatorGroups;
   };
+
+  if (!isAuthenticated) {
+    return <Loading />;
+  }
 
   return (
     <div className='space-y-4'>
