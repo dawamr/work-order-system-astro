@@ -75,12 +75,12 @@ const TableView: React.FC<TableViewProps> = ({ workOrders, isLoading, onRowClick
     {
       header: 'Target Quantity',
       accessor: 'target_quantity',
-      cell: (value) => <span className='text-gray-900 dark:text-gray-100'>{value.toLocaleString()}</span>,
+      cell: (value) => <span className='text-gray-900 dark:text-gray-100'>{value}</span>,
     },
     {
       header: 'Quantity',
       accessor: 'quantity',
-      cell: (value) => <span className='text-gray-900 dark:text-gray-100'>{value.toLocaleString()}</span>,
+      cell: (value) => <span className='text-gray-900 dark:text-gray-100'>{value}</span>,
     },
     {
       header: 'Deadline',
