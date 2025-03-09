@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { workOrderAPI, operatorsAPI } from '../../utils/api';
 import Button from '../Button';
 import { Datepicker } from 'flowbite-react';
-import { format, parse } from 'date-fns';
+import { format, min, parse } from 'date-fns';
 import type { Operator } from '../../types/user';
 interface CreateWorkOrderSlidePanelProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ interface CreateWorkOrderSlidePanelProps {
 const CreateWorkOrderSlidePanel: React.FC<CreateWorkOrderSlidePanelProps> = ({ isOpen, onClose, onSuccess }) => {
   const [productName, setProductName] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [targetQuantity, setTargetQuantity] = useState('');
   const [deadline, setDeadline] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [operatorId, setOperatorId] = useState('');
@@ -29,6 +30,7 @@ const CreateWorkOrderSlidePanel: React.FC<CreateWorkOrderSlidePanelProps> = ({ i
       fetchOperators();
       setProductName('');
       setQuantity('');
+      setTargetQuantity('');
       setDeadline('');
       setSelectedDate(undefined);
       setOperatorId('');
@@ -96,8 +98,14 @@ const CreateWorkOrderSlidePanel: React.FC<CreateWorkOrderSlidePanelProps> = ({ i
       }
 
       const quantityNum = parseInt(quantity);
-      if (isNaN(quantityNum) || quantityNum <= 0) {
-        throw new Error('Quantity must be a positive number');
+      const targetQuantityNum = parseInt(targetQuantity);
+      // if (isNaN(quantityNum) || quantityNum <= 0) {
+      //   throw new Error('Quantity must be a positive number');
+      // }
+
+      console.log(targetQuantity);
+      if (isNaN(targetQuantityNum) || targetQuantityNum <= 0) {
+        throw new Error('Target quantity must be a positive number');
       }
 
       if (!deadline) {
@@ -114,7 +122,8 @@ const CreateWorkOrderSlidePanel: React.FC<CreateWorkOrderSlidePanelProps> = ({ i
         product_name: productName.trim(),
         quantity: quantityNum,
         production_deadline: new Date(deadline).toISOString(),
-        operator_id: operatorIdNum,
+        operator_id: operatorIdNum ? operatorIdNum : 0,
+        target_quantity: targetQuantityNum,
       });
 
       // Panggil onSuccess untuk trigger refresh
@@ -201,19 +210,19 @@ const CreateWorkOrderSlidePanel: React.FC<CreateWorkOrderSlidePanelProps> = ({ i
 
                   <div>
                     <label
-                      htmlFor='quantity'
+                      htmlFor='targetQuantity'
                       className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
                     >
-                      Quantity
+                      Target Quantity
                     </label>
                     <input
                       type='number'
-                      id='quantity'
+                      id='targetQuantity'
                       className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
-                      placeholder='Enter quantity'
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      min='1'
+                      placeholder='Enter target quantity'
+                      value={targetQuantity}
+                      onChange={(e) => setTargetQuantity(e.target.value)}
+                      min={1}
                       required
                     />
                   </div>
@@ -361,6 +370,23 @@ const CreateWorkOrderSlidePanel: React.FC<CreateWorkOrderSlidePanelProps> = ({ i
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  <div className='hidden'>
+                    <label
+                      htmlFor='quantity'
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                    >
+                      Quantity
+                    </label>
+                    <input
+                      type='number'
+                      id='quantity'
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                      placeholder='Enter quantity'
+                      value={0}
+                      min='0'
+                    />
                   </div>
                 </div>
 
