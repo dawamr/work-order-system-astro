@@ -334,6 +334,129 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
 
               <form onSubmit={handleSubmit}>
                 <div className='space-y-6'>
+                  {userRole === 'production_manager' && (
+                    <div>
+                      <label
+                        htmlFor='operator'
+                        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                      >
+                        Assign to Operator
+                      </label>
+                      <div className='relative' ref={dropdownRef}>
+                        <button
+                          type='button'
+                          className='block w-full px-3 py-2 text-left border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm bg-white dark:bg-gray-700 flex justify-between items-center'
+                          onClick={() => setIsOperatorDropdownOpen(!isOperatorDropdownOpen)}
+                        >
+                          <span className={`${selectedOperator ? '' : 'text-gray-400'}`}>
+                            {selectedOperator ? selectedOperator.username : 'Select an operator'}
+                          </span>
+                          <svg
+                            className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                              isOperatorDropdownOpen ? 'transform rotate-180' : ''
+                            }`}
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                            xmlns='http://www.w3.org/2000/svg'
+                          >
+                            <path
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                              strokeWidth='2'
+                              d='M19 9l-7 7-7-7'
+                            ></path>
+                          </svg>
+                        </button>
+
+                        {isOperatorDropdownOpen && (
+                          <div className='absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 py-1 max-h-60 overflow-auto transform transition-all duration-200 ease-in-out'>
+                            <div className='px-3 py-2 sticky top-0 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600'>
+                              <div className='relative'>
+                                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                  <svg
+                                    className='h-4 w-4 text-gray-400'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                    xmlns='http://www.w3.org/2000/svg'
+                                  >
+                                    <path
+                                      strokeLinecap='round'
+                                      strokeLinejoin='round'
+                                      strokeWidth='2'
+                                      d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                                    ></path>
+                                  </svg>
+                                </div>
+                                <input
+                                  type='text'
+                                  className='block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white'
+                                  placeholder='Search operators...'
+                                  value={operatorSearchTerm}
+                                  onChange={(e) => setOperatorSearchTerm(e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              {filteredOperators.length > 0 ? (
+                                filteredOperators.map((operator) => (
+                                  <div
+                                    key={operator.id}
+                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                                      operatorId === operator.id.toString()
+                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                        : ''
+                                    }`}
+                                    onClick={() => {
+                                      setOperatorId(operator.id.toString());
+                                      setIsOperatorDropdownOpen(false);
+                                      setOperatorSearchTerm('');
+                                    }}
+                                  >
+                                    <div className='flex items-center'>
+                                      <div className='h-8 w-8 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full flex items-center justify-center mr-3'>
+                                        {operator.username.charAt(0).toUpperCase()}
+                                      </div>
+                                      <span className='text-sm font-medium text-truncate'>{operator.username}</span>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className='px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center'>
+                                  No operators found
+                                </div>
+                              )}
+                            </div>
+
+                            {operators.length > 10 && filteredOperators.length > 5 && (
+                              <div className='px-3 py-2 text-xs text-center text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600'>
+                                Showing {filteredOperators.length} of {operators.length} operators
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <select
+                          id='operator'
+                          className='opacity-0 absolute h-0 w-0'
+                          value={operatorId}
+                          onChange={() => {}}
+                          required
+                        >
+                          <option value=''>Select an operator</option>
+                          {operators.map((operator) => (
+                            <option key={operator.id} value={operator.id.toString()}>
+                              {operator.username}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <label
                       htmlFor='product-name'
@@ -525,129 +648,6 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                       )}
                     </div>
                   </div>
-
-                  {userRole === 'production_manager' && (
-                    <div>
-                      <label
-                        htmlFor='operator'
-                        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
-                      >
-                        Assign to Operator
-                      </label>
-                      <div className='relative' ref={dropdownRef}>
-                        <button
-                          type='button'
-                          className='block w-full px-3 py-2 text-left border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm bg-white dark:bg-gray-700 flex justify-between items-center'
-                          onClick={() => setIsOperatorDropdownOpen(!isOperatorDropdownOpen)}
-                        >
-                          <span className={`${selectedOperator ? '' : 'text-gray-400'}`}>
-                            {selectedOperator ? selectedOperator.username : 'Select an operator'}
-                          </span>
-                          <svg
-                            className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
-                              isOperatorDropdownOpen ? 'transform rotate-180' : ''
-                            }`}
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                            xmlns='http://www.w3.org/2000/svg'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M19 9l-7 7-7-7'
-                            ></path>
-                          </svg>
-                        </button>
-
-                        {isOperatorDropdownOpen && (
-                          <div className='absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 py-1 max-h-60 overflow-auto transform transition-all duration-200 ease-in-out'>
-                            <div className='px-3 py-2 sticky top-0 bg-white dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600'>
-                              <div className='relative'>
-                                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                                  <svg
-                                    className='h-4 w-4 text-gray-400'
-                                    fill='none'
-                                    stroke='currentColor'
-                                    viewBox='0 0 24 24'
-                                    xmlns='http://www.w3.org/2000/svg'
-                                  >
-                                    <path
-                                      strokeLinecap='round'
-                                      strokeLinejoin='round'
-                                      strokeWidth='2'
-                                      d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                                    ></path>
-                                  </svg>
-                                </div>
-                                <input
-                                  type='text'
-                                  className='block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white'
-                                  placeholder='Search operators...'
-                                  value={operatorSearchTerm}
-                                  onChange={(e) => setOperatorSearchTerm(e.target.value)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              </div>
-                            </div>
-
-                            <div>
-                              {filteredOperators.length > 0 ? (
-                                filteredOperators.map((operator) => (
-                                  <div
-                                    key={operator.id}
-                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
-                                      operatorId === operator.id.toString()
-                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                        : ''
-                                    }`}
-                                    onClick={() => {
-                                      setOperatorId(operator.id.toString());
-                                      setIsOperatorDropdownOpen(false);
-                                      setOperatorSearchTerm('');
-                                    }}
-                                  >
-                                    <div className='flex items-center'>
-                                      <div className='h-8 w-8 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full flex items-center justify-center mr-3'>
-                                        {operator.username.charAt(0).toUpperCase()}
-                                      </div>
-                                      <span className='text-sm font-medium text-truncate'>{operator.username}</span>
-                                    </div>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className='px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center'>
-                                  No operators found
-                                </div>
-                              )}
-                            </div>
-
-                            {operators.length > 10 && filteredOperators.length > 5 && (
-                              <div className='px-3 py-2 text-xs text-center text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600'>
-                                Showing {filteredOperators.length} of {operators.length} operators
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        <select
-                          id='operator'
-                          className='opacity-0 absolute h-0 w-0'
-                          value={operatorId}
-                          onChange={() => {}}
-                          required
-                        >
-                          <option value=''>Select an operator</option>
-                          {operators.map((operator) => (
-                            <option key={operator.id} value={operator.id.toString()}>
-                              {operator.username}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className='border-t border-gray-200 dark:border-gray-700 mt-8 py-5'>
