@@ -50,7 +50,7 @@ const userRole: UserRole | null = null; // Will be set via client-side script
         editRoot.render(
           React.createElement(EditWorkOrderSlidePanel, {
             isOpen: isEditPanelOpen,
-            workOrder: currentWorkOrder,
+            workOrder: currentWorkOrder as WorkOrder,
             onClose: () => {
               isEditPanelOpen = false;
               currentWorkOrder = null;
