@@ -162,6 +162,14 @@ export const workOrderAPI = {
 // API untuk laporan
 export const reportsAPI = {
   /** Mengambil ringkasan work order berdasarkan status dengan rentang tanggal opsional */
+  getSummaryDashboard: async (startDate?: string, endDate?: string) => {
+    const params: Record<string, any> = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    const response = await api.get('/reports/dashboard', { params });
+    return response.data;
+  },
+
   getSummary: async (startDate?: string, endDate?: string) => {
     const params: Record<string, any> = {};
     if (startDate) params.start_date = startDate;
@@ -170,12 +178,19 @@ export const reportsAPI = {
     return response.data;
   },
 
-  /** Mengambil performa operator dengan rentang tanggal opsional */
-  getOperatorPerformance: async (startDate?: string, endDate?: string) => {
+  getOperatorPerformance: async (id: number, startDate?: string, endDate?: string) => {
     const params: Record<string, any> = {};
     if (startDate) params.start_date = startDate;
     if (endDate) params.end_date = endDate;
-    const response = await api.get('/reports/operators', { params });
+    const response = await api.get(`/reports/summary/${id}`, { params });
+    return response.data;
+  },
+
+  getAllOperatorPerformance: async (startDate?: string, endDate?: string) => {
+    const params: Record<string, any> = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    const response = await api.get('/reports/performance', { params });
     return response.data;
   },
 };
