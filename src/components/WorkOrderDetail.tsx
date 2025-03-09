@@ -282,7 +282,7 @@ const WorkOrderDetail: React.FC<WorkOrderDetailProps> = ({ id }) => {
                               !isLastItem ? 'mb-4' : ''
                             } mt-2 text-base font-normal text-gray-500 dark:text-gray-400`}
                           >
-                            ✍️ {log.progress_description} <br />
+                            ✍️ {log.progress_desc} <br />
                             {index < workProgressLogs.length - 1 && (
                               <>
                                 ⏱️ :{' '}
