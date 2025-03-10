@@ -204,7 +204,8 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
       if (userRole === 'production_manager') {
         await workOrderAPI.update(workOrder.id, updateData);
       }
-      if (userRole === 'operator') {
+
+      if (userRole === 'operator' || userRole === 'production_manager') {
         await workOrderAPI.updateStatus(workOrder.id, status, quantityNum, description);
       }
 
