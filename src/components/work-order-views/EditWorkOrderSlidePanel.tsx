@@ -159,7 +159,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
 
       const quantityNum = parseInt(quantity);
       const targetQuantityNum = parseInt(targetQuantity);
-      if (isNaN(quantityNum) || quantityNum <= 0) {
+      if (quantityNum < 0) {
         throw new Error('Quantity must be a positive number');
       }
       if (isNaN(targetQuantityNum) || (targetQuantityNum <= 0 && userRole === 'production_manager')) {
@@ -500,6 +500,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                         className='block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
                         value={targetQuantity}
                         onChange={(e) => setTargetQuantity(e.target.value)}
+                        min='1'
                       />
                     )}
                     {userRole === 'operator' && (
@@ -567,7 +568,7 @@ const EditWorkOrderSlidePanel: React.FC<EditWorkOrderSlidePanelProps> = ({ isOpe
                       placeholder='Enter quantity'
                       value={quantity}
                       onChange={(e) => setQuantity(e.target.value)}
-                      min='1'
+                      min='0'
                       required
                     />
                   </div>
