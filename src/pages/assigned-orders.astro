@@ -6,7 +6,7 @@ import type { WorkOrder } from '../types/workOrders';
 // We'll handle authentication in client-side
 // This is just a placeholder for SSR
 const isAuthenticated = true;
-const userRole: UserRole | null = null; // Will be set via client-side script
+const userRole: UserRole = 'operator'; // Will be set via client-side script
 ---
 
 <MainLayout title="Assigned Orders" isAuthenticated={isAuthenticated} userRole={userRole}>
@@ -74,7 +74,7 @@ const userRole: UserRole | null = null; // Will be set via client-side script
   (async function() {
     try {
       const authData = localStorageOperations.getAuth();
-      if (!authData?.token || authData.user.role !== 'operator') {
+      if (!authData?.token && authData.user.role !== 'operator') {
         window.location.href = '/login';
       }
       document.body.setAttribute('data-user-role', authData.user.role);
