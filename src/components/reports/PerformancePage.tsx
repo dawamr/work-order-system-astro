@@ -78,7 +78,7 @@ const PerformancePage: React.FC<PerformancePageProps> = ({ onExportPdf, onExport
     if (onExportPdf) {
       onExportPdf();
     } else {
-      alert('Export feature under development');
+      alert('Export feature is not available yet');
     }
   };
 
@@ -86,7 +86,7 @@ const PerformancePage: React.FC<PerformancePageProps> = ({ onExportPdf, onExport
     if (onExportExcel) {
       onExportExcel();
     } else {
-      alert('Export feature under development');
+      alert('Export feature is not available yet');
     }
   };
 

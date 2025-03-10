@@ -76,7 +76,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onExportPdf, onExportExcel }) =
     if (onExportPdf) {
       onExportPdf();
     } else {
-      alert('Export feature under development');
+      alert('Export feature is not available yet');
     }
   };
 
@@ -84,7 +84,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ onExportPdf, onExportExcel }) =
     if (onExportExcel) {
       onExportExcel();
     } else {
-      alert('Export feature under development');
+      alert('Export feature is not available yet');
     }
   };
 
