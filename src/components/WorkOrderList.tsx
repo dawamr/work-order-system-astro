@@ -73,7 +73,7 @@ const WorkOrderList: React.FC<WorkOrderListProps> = ({ type }) => {
     try {
       // Check authentication
       const authData = localStorageOperations.getAuth();
-      if (!authData?.token || authData.user.role !== 'production_manager') {
+      if (!authData?.token) {
         // Redirect to login in client-side
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
