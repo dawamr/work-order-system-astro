@@ -13,12 +13,10 @@ const api = axios.create({
 // Interceptor untuk menambahkan header Authorization
 api.interceptors.request.use(
   async (config) => {
-    console.log('Request Interceptor dijalankan');
     try {
       const authData = localStorageOperations.getAuth();
       if (authData?.token) {
         config.headers.Authorization = `Bearer ${authData.token}`;
-        console.log('Auth Header Set:', config.headers.Authorization); // Debugging
       }
       return config;
     } catch (error) {
@@ -123,7 +121,6 @@ export const workOrderAPI = {
     const data: Record<string, any> = { status };
     if (quantity !== undefined) data.quantity = quantity;
     if (description !== undefined) data.description = description;
-    console.log(data);
     const response = await api.put(`/work-orders/${id}/status`, data);
     return response.data;
   },
